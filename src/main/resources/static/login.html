@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="stylesheet" href="css/login.css">
 </head>
 
 <body class="bg-gray-200 min-h-screen flex items-center justify-center p-5">
@@ -56,7 +56,7 @@
                 <!-- Image -->
                 <div class="flex justify-center mt-8">
                     <img
-                        th:src="@{/images/marketplace.png}"
+                        src="images/marketplace.png"
                         alt="Marketplace"
                         class="w-[350px] object-contain">
                 </div>
@@ -135,7 +135,7 @@
                 </div>
 
                 <!-- Form -->
-                <form class="mt-8">
+                <form class="mt-8" action="dashboard.html">
 
                     <!-- Email -->
                     <div>
@@ -245,7 +245,7 @@
 
 </div>
 
-<script th:src="@{/js/login.js}"></script>
+<script src="js/login.js"></script>
 
 </body>
 </html>
