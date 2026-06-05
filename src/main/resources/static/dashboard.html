@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <!-- Custom CSS (Thymeleaf) -->
-    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <!-- Custom CSS (Static) -->
+    <link class="main-css" rel="stylesheet" href="css/dashboard.css">
 </head>
 <body class="bg-gray-100">
 
@@ -127,7 +127,7 @@
 
     </main>
 
-    <!-- Custom JS (Thymeleaf) -->
-    <script th:src="@{/js/dashboard.js}"></script>
+    <!-- Custom JS (Static) -->
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
