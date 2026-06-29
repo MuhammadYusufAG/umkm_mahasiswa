@@ -1,4 +1,42 @@
+function showNotification(message, isSuccess = false) {
+    const toast = document.getElementById("toastNotification");
+    const toastMessage = document.getElementById("toastMessage");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastIconContainer = document.getElementById("toastIconContainer");
+    const toastIcon = document.getElementById("toastIcon");
+
+    toastMessage.textContent = message;
+    
+    if (isSuccess) {
+        toastTitle.textContent = "Berhasil";
+        toastIconContainer.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-green-100 text-green-600";
+        toastIcon.className = "fa-solid fa-check text-3xl";
+    } else {
+        toastTitle.textContent = "Gagal";
+        toastIconContainer.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-red-100 text-red-600";
+        toastIcon.className = "fa-solid fa-circle-exclamation text-3xl";
+    }
+
+    toast.classList.remove("hidden");
+    setTimeout(() => {
+        toast.classList.remove("opacity-0");
+    }, 10);
+}
+
+function closeNotification() {
+    const toast = document.getElementById("toastNotification");
+    toast.classList.add("opacity-0");
+    setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    const closeBtn = document.getElementById("closeToastBtn");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeNotification);
+    }
+
     let selectedRole = null;
 
     // ==========================================
@@ -72,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const confirmPassword = document.getElementById("confirmPassword").value.trim();
 
             if (!nama || !alamat || !email || !password || !confirmPassword) {
-                alert("Semua field wajib diisi!");
+                showNotification("Semua field wajib diisi!");
                 return;
             }
 
@@ -89,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (password.length < 6) {
-                alert("Password minimal 6 karakter!");
+                showNotification("Password minimal 6 karakter!");
                 return;
             }
 
@@ -112,16 +150,18 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then(async (response) => {
                 if (response.ok) {
-                    alert("Registrasi berhasil! Silakan login.");
-                    window.location.href = "/login";
+                    showNotification("Registrasi berhasil! Silakan login.", true);
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 2000);
                 } else {
                     const errMsg = await response.text();
-                    alert("Gagal registrasi: " + errMsg);
+                    showNotification("Gagal registrasi: " + errMsg);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert("Terjadi kesalahan sistem saat menghubungi server.");
+                showNotification("Terjadi kesalahan sistem saat menghubungi server.");
             });
         });
     }

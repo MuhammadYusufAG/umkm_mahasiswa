@@ -71,4 +71,14 @@ public class DashboardController {
     public String pesananPenjual() {
         return "forward:/pesananPenjual.html";
     }
+
+    @GetMapping("/forgot-password")
+    public String forgotPassword() {
+        return "forward:/forgot-password.html";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPassword() {
+        return "forward:/reset-password.html";
+    }
 }
