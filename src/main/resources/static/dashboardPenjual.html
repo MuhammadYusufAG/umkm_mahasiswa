@@ -8,43 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css">
-    <style>
-        .sidebar {
-            width: 260px;
-            min-height: 100vh;
-            background: #0f172a;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            border-radius: 10px;
-            color: #94a3b8;
-            transition: .2s;
-            margin-bottom: 4px;
-        }
-
-        .sidebar-link:hover,
-        .sidebar-link.active {
-            background: #0046ff;
-            color: white;
-        }
-
-        .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 999px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, .06);
-        }
-    </style>
+    <link rel="stylesheet" href="/css/dashboardPenjual.css">
 </head>
 
 <body class="bg-gray-100 flex">
@@ -60,25 +24,25 @@
         </div>
 
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-3 px-2">Menu Utama</p>
-        <a href="dashboard-penjual.html" class="sidebar-link active">
+        <a href="/dashboardPenjual" class="sidebar-link active">
             <i class="fa-solid fa-gauge-high w-5"></i> Dashboard
         </a>
-        <a href="kelola-produk.html" class="sidebar-link">
+        <a href="/kelolaProduk" class="sidebar-link">
             <i class="fa-solid fa-box-open w-5"></i> Kelola Produk
         </a>
-        <a href="pesanan-penjual.html" class="sidebar-link">
+        <a href="/pesananPenjual" class="sidebar-link">
             <i class="fa-solid fa-receipt w-5"></i> Pesanan
             <span class="badge bg-red-500 text-white ml-auto">3</span>
         </a>
-        <a href="stok-produk.html" class="sidebar-link">
+        <a href="/stokProduk" class="sidebar-link">
             <i class="fa-solid fa-warehouse w-5"></i> Stok Produk
         </a>
 
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-3 mt-6 px-2">Lainnya</p>
-        <a href="dashboard.html" class="sidebar-link">
+        <a href="/dashboard" class="sidebar-link">
             <i class="fa-solid fa-store w-5"></i> Lihat Toko
         </a>
-        <a href="login.html" class="sidebar-link mt-auto">
+        <a href="/logout" class="sidebar-link mt-auto">
             <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
         </a>
     </aside>
