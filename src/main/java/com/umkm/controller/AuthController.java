@@ -7,6 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import com.umkm.entity.PasswordResetToken;
+import com.umkm.repository.PasswordResetTokenRepository;
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,6 +31,7 @@ import lombok.Data;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final HttpSessionSecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
@@ -88,6 +95,61 @@ public class AuthController {
             return ResponseEntity.status(401).body(new ErrorResponse("Invalid credentials"));
         }
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Email tidak ditemukan!"));
+        }
+
+        User user = userOpt.get();
+        
+        // Hapus token lama jika ada (agar tidak menumpuk)
+        // Note: di aplikasi production yang kompleks mungkin kita butuh Transactional service, 
+        // tapi untuk scope ini kita langsung panggil di controller atau biarkan token lama tertumpuk sementara.
+        // Mari kita buat token baru saja.
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 jam
+                .build();
+                
+        tokenRepository.save(resetToken);
+
+        // Simulasi pengiriman email
+        String resetUrl = "http://localhost:8081/reset-password.html?token=" + token;
+        System.out.println("\n\n=======================================================");
+        System.out.println("SIMULASI EMAIL TERKIRIM KE: " + user.getEmail());
+        System.out.println("Klik link berikut untuk mereset password Anda:");
+        System.out.println(resetUrl);
+        System.out.println("=======================================================\n\n");
+
+        return ResponseEntity.ok("Tautan reset password telah dikirim ke email Anda!");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(request.getToken());
+        if (tokenOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Token tidak valid!"));
+        }
+
+        PasswordResetToken resetToken = tokenOpt.get();
+        if (resetToken.getExpiryDate().before(new Date())) {
+            tokenRepository.delete(resetToken);
+            return ResponseEntity.badRequest().body(new ErrorResponse("Token sudah kedaluwarsa!"));
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        tokenRepository.delete(resetToken);
+
+        return ResponseEntity.ok("Password berhasil diubah!");
+    }
 }
 
 @Data
@@ -114,4 +176,15 @@ class RegisterRequest {
     private String email;
     private String password;
     private String role;
+}
+
+@Data
+class ForgotPasswordRequest {
+    private String email;
+}
+
+@Data
+class ResetPasswordRequest {
+    private String token;
+    private String newPassword;
 }
