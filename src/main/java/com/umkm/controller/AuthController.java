@@ -7,6 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.Data;
 
@@ -17,6 +26,8 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final HttpSessionSecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
@@ -53,6 +64,48 @@ public class AuthController {
 
         return ResponseEntity.ok("User registered successfully!");
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseGet(() -> userRepository.findByEmail(request.getUsername()).orElse(null));
+
+            if (user == null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("User not found"));
+            }
+
+            return ResponseEntity.ok(new LoginResponse(user.getRole().name()));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(new ErrorResponse("Invalid credentials"));
+        }
+    }
+}
+
+@Data
+class ErrorResponse {
+    private String error;
+    public ErrorResponse(String error) { this.error = error; }
+}
+
+@Data
+class LoginRequest {
+    private String username;
+    private String password;
+}
+
+@Data
+class LoginResponse {
+    private String role;
+    public LoginResponse(String role) { this.role = role; }
 }
 
 @Data

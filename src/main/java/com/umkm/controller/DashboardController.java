@@ -50,4 +50,25 @@ public class DashboardController {
     public String kategoriJus() {
         return "forward:/kategoriJus.html";
     }
+
+    // SELLER PAGES
+    @GetMapping("/dashboardPenjual")
+    public String dashboardPenjual() {
+        return "forward:/dashboardPenjual.html";
+    }
+
+    @GetMapping("/kelolaProduk")
+    public String kelolaProduk() {
+        return "forward:/kelolaProduk.html";
+    }
+
+    @GetMapping("/stokProduk")
+    public String stokProduk() {
+        return "forward:/stokProduk.html";
+    }
+
+    @GetMapping("/pesananPenjual")
+    public String pesananPenjual() {
+        return "forward:/pesananPenjual.html";
+    }
 }
