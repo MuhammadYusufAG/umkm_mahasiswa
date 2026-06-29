@@ -10,4 +10,9 @@ public class LoginController {
     public String login() {
         return "forward:/login.html";
     }
+
+    @GetMapping("/registrasi")
+    public String registrasi() {
+        return "forward:/registrasi.html";
+    }
 }
