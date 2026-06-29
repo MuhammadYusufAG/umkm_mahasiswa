@@ -95,13 +95,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!valid) return;
 
-            // Simulasi registrasi berhasil -> redirect sesuai role
-            alert("Registrasi berhasil! Selamat datang, " + nama + "!");
-            if (selectedRole === "penjual") {
-                window.location.href = "dashboard-penjual.html";
-            } else {
-                window.location.href = "dashboard.html";
-            }
+            // Melakukan request registrasi ke API backend
+            const payload = {
+                username: nama,
+                email: email,
+                password: password,
+                role: selectedRole.toUpperCase()
+            };
+
+            fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (response) => {
+                if (response.ok) {
+                    alert("Registrasi berhasil! Silakan login.");
+                    window.location.href = "/login";
+                } else {
+                    const errMsg = await response.text();
+                    alert("Gagal registrasi: " + errMsg);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Terjadi kesalahan sistem saat menghubungi server.");
+            });
         });
     }
 });

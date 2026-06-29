@@ -232,14 +232,22 @@
     </div>
 
     <script>
-        let produkList = [
-            { id: 1, nama: 'Nasi Goreng Spesial', kategori: 'Makanan', harga: 15000, stok: 3, status: 'Aktif', deskripsi: 'Nasi goreng dengan bumbu rahasia' },
-            { id: 2, nama: 'Kopi Susu Gula Aren', kategori: 'Minuman', harga: 12000, stok: 7, status: 'Aktif', deskripsi: 'Kopi susu dengan gula aren asli' },
-            { id: 3, nama: 'Dimsum Ayam', kategori: 'Snack', harga: 8000, stok: 20, status: 'Aktif', deskripsi: 'Dimsum ayam kukus' },
-            { id: 4, nama: 'Donat Gula Halus', kategori: 'Dessert', harga: 5000, stok: 15, status: 'Aktif', deskripsi: 'Donat empuk tabur gula halus' },
-            { id: 5, nama: 'Teh Tarik', kategori: 'Minuman', harga: 8000, stok: 0, status: 'Nonaktif', deskripsi: 'Teh tarik khas Malaysia' },
-        ];
+        let produkList = [];
         let editId = null;
+
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/api/products/seller');
+                if (res.ok) {
+                    produkList = await res.json();
+                    filterProduk();
+                } else if (res.status === 401 || res.status === 403) {
+                    window.location.href = '/login';
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
 
         function renderTabel(list) {
             const tbody = document.getElementById('tabelProduk');
@@ -248,24 +256,27 @@
                 return;
             }
             tbody.innerHTML = list.map(p => `
-        <tr class="hover:bg-gray-50 transition">
+        <tr class="hover:bg-gray-50 transition ${!p.isActive ? 'opacity-50' : ''}">
             <td class="px-6 py-4">
-                <p class="font-semibold text-gray-800">${p.nama}</p>
-                <p class="text-xs text-gray-400">${p.deskripsi}</p>
+                <p class="font-semibold text-gray-800">${p.name}</p>
+                <p class="text-xs text-gray-400">${p.description || '-'}</p>
             </td>
-            <td class="px-6 py-4 text-gray-500">${p.kategori}</td>
-            <td class="px-6 py-4 font-semibold text-blue-600">Rp ${p.harga.toLocaleString('id-ID')}</td>
+            <td class="px-6 py-4 text-gray-500">${p.category || '-'}</td>
+            <td class="px-6 py-4 font-semibold text-blue-600">Rp ${p.price.toLocaleString('id-ID')}</td>
             <td class="px-6 py-4">
-                <span class="${p.stok <= 5 ? 'text-red-500 font-bold' : 'text-gray-700'}">${p.stok}</span>
-                ${p.stok <= 5 ? '<span class="badge bg-red-100 text-red-500 ml-1">Menipis</span>' : ''}
+                <span class="${p.stock <= 5 ? 'text-red-500 font-bold' : 'text-gray-700'}">${p.stock}</span>
+                ${p.stock <= 5 ? '<span class="badge bg-red-100 text-red-500 ml-1">Menipis</span>' : ''}
             </td>
             <td class="px-6 py-4">
-                <span class="badge ${p.status === 'Aktif' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}">${p.status}</span>
+                <span class="badge ${p.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}">${p.isActive ? 'Aktif' : 'Nonaktif'}</span>
             </td>
             <td class="px-6 py-4">
                 <div class="flex gap-2">
                     <button onclick="editProduk(${p.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center justify-center">
                         <i class="fa-solid fa-pen-to-square text-xs"></i>
+                    </button>
+                    <button onclick="toggleStatus(${p.id})" class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition flex items-center justify-center" title="Toggle Status">
+                        <i class="fa-solid fa-power-off text-xs"></i>
                     </button>
                     <button onclick="hapusProduk(${p.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition flex items-center justify-center">
                         <i class="fa-solid fa-trash text-xs"></i>
@@ -279,12 +290,18 @@
         function filterProduk() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const kategori = document.getElementById('filterKategori').value;
-            const status = document.getElementById('filterStatus').value;
-            const filtered = produkList.filter(p =>
-                p.nama.toLowerCase().includes(search) &&
-                (kategori === '' || p.kategori === kategori) &&
-                (status === '' || p.status === status)
-            );
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            let filtered = produkList.filter(p => {
+                const matchSearch = p.name.toLowerCase().includes(search);
+                const matchKategori = (kategori === '' || p.category === kategori);
+                
+                let matchStatus = true;
+                if (statusFilter === 'Aktif') matchStatus = p.isActive;
+                if (statusFilter === 'Nonaktif') matchStatus = !p.isActive;
+                
+                return matchSearch && matchKategori && matchStatus;
+            });
             renderTabel(filtered);
         }
 
@@ -311,47 +328,76 @@
             editId = id;
             const p = produkList.find(x => x.id === id);
             document.getElementById('modalTitle').textContent = 'Edit Produk';
-            document.getElementById('inputNama').value = p.nama;
-            document.getElementById('inputKategori').value = p.kategori;
-            document.getElementById('inputHarga').value = p.harga;
-            document.getElementById('inputStok').value = p.stok;
-            document.getElementById('inputStatus').value = p.status;
-            document.getElementById('inputDeskripsi').value = p.deskripsi;
+            document.getElementById('inputNama').value = p.name;
+            document.getElementById('inputKategori').value = p.category || '';
+            document.getElementById('inputHarga').value = p.price;
+            document.getElementById('inputStok').value = p.stock;
+            document.getElementById('inputStatus').value = p.isActive ? 'Aktif' : 'Nonaktif';
+            document.getElementById('inputDeskripsi').value = p.description || '';
             openModal(false);
         }
 
-        function hapusProduk(id) {
-            if (confirm('Yakin ingin menghapus produk ini?')) {
-                produkList = produkList.filter(p => p.id !== id);
-                filterProduk();
+        async function toggleStatus(id) {
+            if(confirm('Yakin ingin mengubah status produk ini?')) {
+                try {
+                    const res = await fetch('/api/products/seller/' + id + '/toggle-status', { method: 'PATCH' });
+                    if(res.ok) fetchProducts();
+                    else alert('Gagal merubah status');
+                } catch(e) { console.error(e); }
             }
         }
 
-        function simpanProduk() {
-            const nama = document.getElementById('inputNama').value.trim();
-            const kategori = document.getElementById('inputKategori').value;
-            const harga = parseInt(document.getElementById('inputHarga').value);
-            const stok = parseInt(document.getElementById('inputStok').value);
-            const status = document.getElementById('inputStatus').value;
-            const deskripsi = document.getElementById('inputDeskripsi').value.trim();
+        async function hapusProduk(id) {
+            if (confirm('Yakin ingin menghapus produk ini?')) {
+                try {
+                    const res = await fetch('/api/products/seller/' + id, { method: 'DELETE' });
+                    if(res.ok) fetchProducts();
+                    else alert('Gagal menghapus produk');
+                } catch(e) { console.error(e); }
+            }
+        }
 
-            if (!nama || !kategori || !harga || isNaN(stok)) {
+        async function simpanProduk() {
+            const name = document.getElementById('inputNama').value.trim();
+            const category = document.getElementById('inputKategori').value;
+            const price = parseInt(document.getElementById('inputHarga').value);
+            const stock = parseInt(document.getElementById('inputStok').value);
+            const isActive = document.getElementById('inputStatus').value === 'Aktif';
+            const description = document.getElementById('inputDeskripsi').value.trim();
+
+            if (!name || !category || !price || isNaN(stock)) {
                 alert('Mohon lengkapi semua field wajib!');
                 return;
             }
 
-            if (editId) {
-                const idx = produkList.findIndex(p => p.id === editId);
-                produkList[idx] = { id: editId, nama, kategori, harga, stok, status, deskripsi };
-            } else {
-                produkList.push({ id: Date.now(), nama, kategori, harga, stok, status, deskripsi });
+            const payload = { name, category, price, stock, isActive, description };
+            
+            try {
+                let url = '/api/products/seller';
+                let method = 'POST';
+                if (editId) {
+                    url += '/' + editId;
+                    method = 'PUT';
+                }
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    closeModal();
+                    fetchProducts();
+                } else {
+                    alert('Gagal menyimpan produk');
+                }
+            } catch(e) {
+                console.error(e);
             }
-
-            closeModal();
-            filterProduk();
         }
 
-        renderTabel(produkList);
+        fetchProducts();
     </script>
 </body>
 
