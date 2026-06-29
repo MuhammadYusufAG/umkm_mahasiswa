@@ -84,12 +84,12 @@
                 <div class="grid grid-cols-2 gap-3">
 
                     <!-- Pembeli -->
-                    <label id="labelPembeli"
+                    <label id="labelPembeli" for="rolePembeli"
                         class="role-card flex flex-col items-center gap-2
                         border-2 border-gray-200
                         rounded-xl p-4 cursor-pointer
                         hover:border-blue-400 transition-all">
-                        <input type="radio" name="role" value="pembeli" class="hidden">
+                        <input id="rolePembeli" type="radio" name="role" value="pembeli" class="sr-only">
                         <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
                             <i class="fa-solid fa-bag-shopping text-2xl text-blue-500"></i>
                         </div>
@@ -98,12 +98,12 @@
                     </label>
 
                     <!-- Penjual -->
-                    <label id="labelPenjual"
+                    <label id="labelPenjual" for="rolePenjual"
                         class="role-card flex flex-col items-center gap-2
                         border-2 border-gray-200
                         rounded-xl p-4 cursor-pointer
                         hover:border-blue-400 transition-all">
-                        <input type="radio" name="role" value="penjual" class="hidden">
+                        <input id="rolePenjual" type="radio" name="role" value="penjual" class="sr-only">
                         <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
                             <i class="fa-solid fa-store text-2xl text-green-500"></i>
                         </div>
