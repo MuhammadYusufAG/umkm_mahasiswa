@@ -1,0 +1,42 @@
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: #0f172a;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: #94a3b8;
+    transition: .2s;
+    margin-bottom: 4px;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: #0046ff;
+    color: white;
+}
+
+.badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
