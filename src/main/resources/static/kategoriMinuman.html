@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategori Minuman - UNIP Market</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Custom CSS (Static) -->
+    <link class="main-css" rel="stylesheet" href="/css/kategoriminuman.css">
+</head>
+
+
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-white shadow">
+
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-cart-shopping text-3xl text-blue-700"></i>
+
+                <div>
+                    <h1 class="font-bold text-2xl text-blue-700">UNIP</h1>
+                    <p class="text-xs tracking-[5px] text-blue-700">MARKET</p>
+                </div>
+            </div>
+
+            <a href="dashboard.html" class="bg-blue-700 text-white px-4 py-2 rounded-xl">
+                Kembali
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- Banner -->
+    <section class="container mx-auto px-6 py-8">
+
+        <div class="bg-gradient-to-r from-blue-700 to-blue-500 text-white rounded-3xl p-10">
+
+            <h1 class="text-4xl font-bold">
+                🧋 Kategori Minuman
+            </h1>
+
+            <p class="mt-3 text-blue-100">
+                Segarkan harimu dengan minuman favorit mahasiswa.
+            </p>
+            <div class="flex gap-3 mb-6 flex-wrap">
+
+                <button class="filter-btn bg-blue-700 text-white px-5 py-2 rounded-xl" data-filter="all">
+                    Semua
+                </button>
+
+                <button class="filter-btn bg-white border border-blue-700 text-blue-700 px-5 py-2 rounded-xl"
+                    data-filter="kopi">
+                    Kopi
+                </button>
+
+                <button class="filter-btn bg-white border border-blue-700 text-blue-700 px-5 py-2 rounded-xl"
+                    data-filter="teh">
+                    Teh
+                </button>
+
+                <button class="filter-btn bg-white border border-blue-700 text-blue-700 px-5 py-2 rounded-xl"
+                    data-filter="susu">
+                    Susu & Latte
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Produk -->
+    <section class="container mx-auto px-6 pb-10">
+
+        <h2 class="font-bold text-2xl mb-6">
+            Daftar Minuman
+        </h2>
+
+        <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+
+            <div class="produk-card bg-white rounded-3xl shadow overflow-hidden" data-kategori="kopi"
+                data-nama="Es Kopi Susu" data-harga="16000"
+                data-deskripsi="Perpaduan espresso pekat dengan susu segar dan gula aren, disajikan dingin dengan es batu untuk sensasi manis dan segar."
+                data-bahan="Espresso, susu segar, gula aren, es batu">
+                <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500"
+                    class="produk-img w-full h-48 object-cover cursor-pointer"
+                    onerror="this.onerror=null;this.src='https://placehold.co/500x400/2563eb/ffffff?text=Es+Kopi+Susu';">
+
+                <div class="p-4">
+                    <h3 class="font-bold">Es Kopi Susu</h3>
+                    <p class="text-blue-700 font-semibold mt-2">Rp 16.000</p>
+
+                    <div class="qty-control flex items-center justify-between mt-3 bg-gray-100 rounded-xl px-3 py-2">
+                        <button type="button"
+                            class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">−</button>
+                        <span class="qty-value font-semibold">0</span>
+                        <button type="button"
+                            class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">+</button>
+                    </div>
+
+                    <button class="btn-beli mt-3 w-full bg-blue-700 text-white py-2 rounded-xl">
+                        Beli
+                    </button>
+                </div>
+            </div>
+
+            <div class="produk-card bg-white rounded-3xl shadow overflow-hidden" data-kategori="teh"
+                data-nama="Thai Tea" data-harga="15000"
+                data-deskripsi="Teh khas Thailand dengan rasa manis creamy, dipadukan dengan susu dan es krim sebagai pelengkap rasa."
+                data-bahan="Teh Thailand, susu kental manis, creamer, es batu">
+                <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500"
+                    class="produk-img w-full h-48 object-cover cursor-pointer"
+                    onerror="this.onerror=null;this.src='https://placehold.co/500x400/2563eb/ffffff?text=Thai+Tea';">
+
+                <div class="p-4">
+                    <h3 class="font-bold">Thai Tea</h3>
+                    <p class="text-blue-700 font-semibold mt-2">
+                        Rp 15.000
+                    </p>
+
+                    <div class="qty-control flex items-center justify-between mt-3 bg-gray-100 rounded-xl px-3 py-2">
+                        <button type="button"
+                            class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">−</button>
+                        <span class="qty-value font-semibold">0</span>
+                        <button type="button"
+                            class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">+</button>
+                    </div>
+
+                    <button class="btn-beli mt-3 w-full bg-blue-700 text-white py-2 rounded-xl">
+                        Beli
+                    </button>
+                </div>
+            </div>
+
+            <div class="produk-card bg-white rounded-3xl shadow overflow-hidden" data-nama="Es Teh Manis"
+                data-harga="8000"
+                data-deskripsi="Teh seduh klasik yang disajikan dingin dengan gula secukupnya, minuman sederhana yang selalu jadi favorit."
+                data-bahan="Teh hitam, gula, es batu, air">
+                <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500"
+                    class="produk-img w-full h-48 object-cover cursor-pointer"
+                    onerror="this.onerror=null;this.src='https://placehold.co/500x400/2563eb/ffffff?text=Es+Teh+Manis';">
+
+                <div class="p-4">
+                    <h3 class="font-bold">Es Teh Manis</h3>
+                    <p class="text-blue-700 font-semibold mt-2">
+                        Rp 8.000
+                    </p>
+
+                    <div class="qty-control flex items-center justify-between mt-3 bg-gray-100 rounded-xl px-3 py-2">
+                        <button type="button"
+                            class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">−</button>
+                        <span class="qty-value font-semibold">0</span>
+                        <button type="button"
+                            class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">+</button>
+                    </div>
+
+                    <button class="btn-beli mt-3 w-full bg-blue-700 text-white py-2 rounded-xl">
+                        Beli
+                    </button>
+                </div>
+            </div>
+
+            <div class="produk-card bg-white rounded-3xl shadow overflow-hidden" data-kategori="susu"
+                data-nama="Matcha Latte" data-harga="18000"
+                data-deskripsi="Bubuk matcha premium dipadukan dengan susu segar, menghasilkan rasa teh hijau yang creamy dan sedikit pahit-manis."
+                data-bahan="Bubuk matcha, susu segar, gula, es batu">
+                <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500"
+                    class="produk-img w-full h-48 object-cover cursor-pointer"
+                    onerror="this.onerror=null;this.src='https://placehold.co/500x400/2563eb/ffffff?text=Matcha+Latte';">
+
+                <div class="p-4">
+                    <h3 class="font-bold">Matcha Latte</h3>
+                    <p class="text-blue-700 font-semibold mt-2">Rp 18.000</p>
+
+                    <!-- STATUS STOK -->
+                    <p class="text-red-600 font-semibold text-sm mt-1">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        Stok Tidak Tersedia
+                    </p>
+
+                    <div
+                        class="qty-control flex items-center justify-between mt-3 bg-gray-100 rounded-xl px-3 py-2 opacity-50">
+
+                        <button type="button"
+                            class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">
+                            −
+                        </button>
+
+                        <span class="qty-value font-semibold">0</span>
+
+                        <button type="button"
+                            class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">
+                            +
+                        </button>
+
+                    </div>
+
+                    <button class="btn-beli mt-3 w-full bg-gray-400 text-white py-2 rounded-xl cursor-not-allowed"
+                        disabled>
+                        Stok Habis
+                    </button>
+
+                </div>
+
+            </div>
+
+    </section>
+
+    <!-- Modal Deskripsi Produk -->
+    <div id="modalProduk" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+
+        <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-xl relative">
+
+            <button id="btnTutupModal" type="button"
+                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-600 hover:text-red-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <img id="modalImg" src="" class="w-full h-56 object-cover">
+
+            <div class="p-6">
+                <h3 id="modalNama" class="font-bold text-2xl"></h3>
+                <p id="modalHarga" class="text-blue-700 font-semibold mt-1"></p>
+
+                <p class="mt-4 text-sm font-semibold text-gray-500">Deskripsi</p>
+                <p id="modalDeskripsi" class="text-gray-700 mt-1"></p>
+
+                <p class="mt-4 text-sm font-semibold text-gray-500">Bahan / Komposisi</p>
+                <p id="modalBahan" class="text-gray-700 mt-1"></p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Custom JS (Static) -->
+    <script src="/js/produk.js"></script>
+</body>
+
+</html>

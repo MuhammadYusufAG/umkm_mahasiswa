@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIP Market - Stok Produk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: #0f172a;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: #94a3b8;
+            transition: .2s;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: #0046ff;
+            color: white;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar flex flex-col p-4 sticky top-0 h-screen overflow-y-auto">
+        <div class="flex items-center gap-3 px-2 py-4 mb-6">
+            <i class="fa-solid fa-cart-shopping text-[#0046ff] text-3xl"></i>
+            <div>
+                <h1 class="font-bold text-xl text-white">UNIP</h1>
+                <p class="text-xs tracking-[4px] text-blue-400">MARKET</p>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 uppercase tracking-widest mb-3 px-2">Menu Utama</p>
+        <a href="dashboard-penjual.html" class="sidebar-link"><i class="fa-solid fa-gauge-high w-5"></i> Dashboard</a>
+        <a href="kelola-produk.html" class="sidebar-link"><i class="fa-solid fa-box-open w-5"></i> Kelola Produk</a>
+        <a href="pesanan-penjual.html" class="sidebar-link">
+            <i class="fa-solid fa-receipt w-5"></i> Pesanan
+            <span class="badge bg-red-500 text-white ml-auto">3</span>
+        </a>
+        <a href="stok-produk.html" class="sidebar-link active"><i class="fa-solid fa-warehouse w-5"></i> Stok Produk</a>
+        <p class="text-xs text-gray-500 uppercase tracking-widest mb-3 mt-6 px-2">Lainnya</p>
+        <a href="dashboard.html" class="sidebar-link"><i class="fa-solid fa-store w-5"></i> Lihat Toko</a>
+        <a href="login.html" class="sidebar-link"><i class="fa-solid fa-right-from-bracket w-5"></i> Logout</a>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex flex-col min-h-screen">
+        <header class="bg-white shadow-sm px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">Stok Produk</h2>
+                <p class="text-sm text-gray-400">Pantau dan perbarui stok produk Anda</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-[#0046ff] text-white flex items-center justify-center font-bold">PJ
+            </div>
+        </header>
+
+        <main class="flex-1 p-8">
+
+            <!-- STAT -->
+            <div class="grid grid-cols-3 gap-5 mb-8">
+                <div class="bg-white rounded-2xl p-5 shadow flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <p class="text-xs text-gray-400">Stok Aman</p>
+                        <p class="text-2xl font-bold text-gray-800" id="statAman">0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <p class="text-xs text-gray-400">Stok Menipis</p>
+                        <p class="text-2xl font-bold text-gray-800" id="statMenipis">0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-100 text-red-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-xmark"></i></div>
+                    <div>
+                        <p class="text-xs text-gray-400">Habis</p>
+                        <p class="text-2xl font-bold text-gray-800" id="statHabis">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL -->
+            <div class="bg-white rounded-2xl shadow overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-4 border-b">
+                    <h3 class="font-bold text-gray-800">Daftar Stok Produk</h3>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="searchStok" placeholder="Cari produk..." oninput="renderStok()"
+                            class="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-gray-500">
+                            <th class="px-6 py-3">Produk</th>
+                            <th class="px-6 py-3">Kategori</th>
+                            <th class="px-6 py-3">Stok Saat Ini</th>
+                            <th class="px-6 py-3">Batas Minimum</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelStok" class="divide-y divide-gray-50"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL RESTOK -->
+    <div id="modalRestok" class="modal-overlay" onclick="closeModal(event)">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-1">Restok Produk</h3>
+            <p id="modalNama" class="text-sm text-gray-400 mb-6"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Stok Saat Ini</label>
+                    <input id="stokSekarang" type="number" disabled
+                        class="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-2.5 text-sm outline-none text-gray-500">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">Tambah Stok <span
+                            class="text-red-500">*</span></label>
+                    <input id="tambahStok" type="number" placeholder="Masukkan jumlah restok" min="1"
+                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div class="bg-blue-50 rounded-xl p-4">
+                    <p class="text-xs text-blue-600">Stok setelah restok: <span id="previewStok"
+                            class="font-bold text-blue-700">-</span></p>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="tutupModal()"
+                    class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+                <button onclick="simpanRestok()"
+                    class="flex-1 bg-[#0046ff] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">Perbarui
+                    Stok</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stokData = [
+            { id: 1, nama: 'Nasi Goreng Spesial', kategori: 'Makanan', stok: 3, min: 10 },
+            { id: 2, nama: 'Kopi Susu Gula Aren', kategori: 'Minuman', stok: 7, min: 10 },
+            { id: 3, nama: 'Dimsum Ayam', kategori: 'Snack', stok: 20, min: 10 },
+            { id: 4, nama: 'Donat Gula Halus', kategori: 'Dessert', stok: 15, min: 10 },
+            { id: 5, nama: 'Teh Tarik', kategori: 'Minuman', stok: 0, min: 5 },
+            { id: 6, nama: 'Jus Alpukat', kategori: 'Jus', stok: 12, min: 8 },
+            { id: 7, nama: 'Pensil 2B Faber', kategori: 'Alat Tulis', stok: 50, min: 20 },
+            { id: 8, nama: 'Gelang Manik', kategori: 'Aksesoris', stok: 4, min: 10 },
+        ];
+
+        let restokIdx = null;
+
+        function getStatus(stok, min) {
+            if (stok === 0) return { label: 'Habis', cls: 'bg-red-100 text-red-600' };
+            if (stok <= min) return { label: 'Menipis', cls: 'bg-yellow-100 text-yellow-600' };
+            return { label: 'Aman', cls: 'bg-green-100 text-green-600' };
+        }
+
+        function renderStok() {
+            const q = document.getElementById('searchStok').value.toLowerCase();
+            const filtered = stokData.filter(s => s.nama.toLowerCase().includes(q));
+
+            let aman = 0, menipis = 0, habis = 0;
+            stokData.forEach(s => {
+                const st = getStatus(s.stok, s.min).label;
+                if (st === 'Aman') aman++;
+                else if (st === 'Menipis') menipis++;
+                else habis++;
+            });
+            document.getElementById('statAman').textContent = aman;
+            document.getElementById('statMenipis').textContent = menipis;
+            document.getElementById('statHabis').textContent = habis;
+
+            const tbody = document.getElementById('tabelStok');
+            tbody.innerHTML = filtered.map((s, i) => {
+                const st = getStatus(s.stok, s.min);
+                return `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 font-medium text-gray-800">${s.nama}</td>
+            <td class="px-6 py-4 text-gray-500">${s.kategori}</td>
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full ${s.stok === 0 ? 'bg-red-400' : s.stok <= s.min ? 'bg-yellow-400' : 'bg-green-400'}"
+                            style="width:${Math.min(100, (s.stok / Math.max(s.min * 2, 1)) * 100)}%"></div>
+                    </div>
+                    <span class="font-bold ${s.stok === 0 ? 'text-red-500' : s.stok <= s.min ? 'text-yellow-600' : 'text-gray-700'}">${s.stok}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-gray-500">${s.min}</td>
+            <td class="px-6 py-4"><span class="badge ${st.cls}">${st.label}</span></td>
+            <td class="px-6 py-4">
+                <button onclick="bukaRestok(${i})" class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-100 transition flex items-center gap-1">
+                    <i class="fa-solid fa-plus"></i> Restok
+                </button>
+            </td>
+        </tr>`;
+            }).join('');
+        }
+
+        function bukaRestok(idx) {
+            restokIdx = idx;
+            const s = stokData[idx];
+            document.getElementById('modalNama').textContent = s.nama;
+            document.getElementById('stokSekarang').value = s.stok;
+            document.getElementById('tambahStok').value = '';
+            document.getElementById('previewStok').textContent = s.stok;
+            document.getElementById('modalRestok').classList.add('show');
+
+            document.getElementById('tambahStok').oninput = function () {
+                const tambah = parseInt(this.value) || 0;
+                document.getElementById('previewStok').textContent = s.stok + tambah;
+            };
+        }
+
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalRestok')) tutupModal();
+        }
+
+        function tutupModal() {
+            document.getElementById('modalRestok').classList.remove('show');
+        }
+
+        function simpanRestok() {
+            const tambah = parseInt(document.getElementById('tambahStok').value);
+            if (!tambah || tambah < 1) { alert('Masukkan jumlah restok yang valid!'); return; }
+            stokData[restokIdx].stok += tambah;
+            tutupModal();
+            renderStok();
+        }
+
+        renderStok();
+    </script>
+</body>
+
+</html>
