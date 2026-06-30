@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", "/api/products/public/**").permitAll()
                 .requestMatchers("/seller/**", "/dashboard-penjual/**", "/stokProduk.html", "/pesananPenjual.html", "/api/products/seller/**").hasRole("SELLER")
                 .requestMatchers("/login", "/login.html", "/registrasi", "/registrasi.html", "/forgot-password", "/forgot-password.html", "/reset-password", "/reset-password.html", "/css/**", "/js/**", "/images/**", "/dashboard", "/dashboard.html",
-                    "/kategoriMakanan", "/kategoriminuman", "/kategorisnack", "/kategoridessert", "/kategoriAksesoris", "/kategoriTulis", "/kategorikopi", "/kategorijus",
+                    "/kategoriMakanan", "/kategoriminuman", "/kategorisnack", "/kategoridessert", "/kategoriAksesoris", "/kategoriTulis", "/kategorikopi", "/kategorijus", "/pesanan", "/pesanan.html",
                     "/kategoriMakanan.html", "/kategoriMinuman.html", "/kategoriSnack.html", "/kategoriDessert.html", "/kategoriAksesoris.html", "/kategoriTulis.html", "/kategoriKopi.html", "/kategoriJus.html").permitAll()
                 .anyRequest().authenticated()
             )

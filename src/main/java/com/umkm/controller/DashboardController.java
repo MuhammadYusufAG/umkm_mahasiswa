@@ -51,6 +51,11 @@ public class DashboardController {
         return "forward:/kategoriJus.html";
     }
 
+    @GetMapping("/pesanan")
+    public String pesanan() {
+        return "forward:/pesanan.html";
+    }
+
     // SELLER PAGES
     @GetMapping("/dashboardPenjual")
     public String dashboardPenjual() {
