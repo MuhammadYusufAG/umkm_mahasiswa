@@ -218,3 +218,31 @@ document.addEventListener("keydown", (e) => {
         tutupModal();
     }
 });
+// ==========================
+// RENDER RATING BINTANG
+// ==========================
+document.querySelectorAll(".produk-card").forEach(card => {
+    const ratingValue = card.dataset.rating;
+    if (ratingValue) {
+        const ratingNum = parseFloat(ratingValue);
+        const totalStars = Math.round(ratingNum);
+        let starsHtml = "";
+        for (let i = 0; i < totalStars; i++) {
+            starsHtml += `<i class="fa-solid fa-star"></i>`;
+        }
+        
+        // Find the title element to insert the rating below it
+        const titleEl = card.querySelector("h3.font-bold");
+        if (titleEl) {
+            const ratingContainer = document.createElement("div");
+            ratingContainer.className = "flex items-center gap-2 mt-1 mb-2";
+            ratingContainer.innerHTML = `
+                <div class="text-yellow-400 flex gap-1 text-sm">
+                    ${starsHtml}
+                </div>
+                <span class="text-xs text-gray-600">(${ratingValue})</span>
+            `;
+            titleEl.parentNode.insertBefore(ratingContainer, titleEl.nextSibling);
+        }
+    }
+});

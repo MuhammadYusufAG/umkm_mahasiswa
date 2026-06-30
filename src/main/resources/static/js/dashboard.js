@@ -88,7 +88,7 @@ if (container) {
                             Rp ${product.price}
                         </span>
 
-                        <button class="bg-blue-700 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition">
+                        <button onclick="beliRekomendasi('${product.name}', '${product.price}', '${product.image}')" class="bg-blue-700 text-white w-10 h-10 rounded-lg hover:bg-blue-800 transition">
                             +
                         </button>
 
@@ -99,6 +99,18 @@ if (container) {
             </div>
         `;
     });
+}
+
+function beliRekomendasi(nama, hargaStr, gambar) {
+    const hargaInt = parseInt(hargaStr.replace(/\./g, ""), 10);
+    const pesanan = {
+        nama: nama,
+        harga: hargaInt,
+        qty: 1,
+        gambar: gambar
+    };
+    sessionStorage.setItem("pesananTerakhir", JSON.stringify(pesanan));
+    window.location.href = "/pesanan";
 }
 
 // ==========================
