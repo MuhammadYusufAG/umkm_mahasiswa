@@ -23,9 +23,12 @@ function renderTabel(list) {
     }
     tbody.innerHTML = list.map(p => `
 <tr class="hover:bg-gray-50 transition ${!p.isActive ? 'opacity-50' : ''}">
-    <td class="px-6 py-4">
-        <p class="font-semibold text-gray-800">${p.name}</p>
-        <p class="text-xs text-gray-400">${p.description || '-'}</p>
+    <td class="px-6 py-4 flex items-center gap-3">
+        <img src="${p.imageUrl || 'https://placehold.co/100x100?text=No+Image'}" class="w-10 h-10 object-cover rounded-lg border" onerror="this.src='https://placehold.co/100x100?text=No+Image'">
+        <div>
+            <p class="font-semibold text-gray-800">${p.name}</p>
+            <p class="text-xs text-gray-400">${p.description || '-'}</p>
+        </div>
     </td>
     <td class="px-6 py-4 text-gray-500">${p.category || '-'}</td>
     <td class="px-6 py-4 font-semibold text-blue-600">Rp ${p.price.toLocaleString('id-ID')}</td>
@@ -78,6 +81,9 @@ function openModal(reset = true) {
         ['inputNama', 'inputHarga', 'inputStok', 'inputDeskripsi'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('inputKategori').value = '';
         document.getElementById('inputStatus').value = 'Aktif';
+        document.getElementById('inputFoto').value = '';
+        document.getElementById('previewContainer').classList.add('hidden');
+        document.getElementById('imagePreview').src = '';
     }
     document.getElementById('modalOverlay').classList.add('show');
 }
@@ -100,6 +106,19 @@ function editProduk(id) {
     document.getElementById('inputStok').value = p.stock;
     document.getElementById('inputStatus').value = p.isActive ? 'Aktif' : 'Nonaktif';
     document.getElementById('inputDeskripsi').value = p.description || '';
+    
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    document.getElementById('inputFoto').value = '';
+    
+    if (p.imageUrl) {
+        imagePreview.src = p.imageUrl;
+        previewContainer.classList.remove('hidden');
+    } else {
+        imagePreview.src = '';
+        previewContainer.classList.add('hidden');
+    }
+    
     openModal(false);
 }
 
@@ -136,7 +155,42 @@ async function simpanProduk() {
         return;
     }
 
-    const payload = { name, category, price, stock, isActive, description };
+    let imageUrl = '';
+    if (editId) {
+        const existingProduct = produkList.find(x => x.id === editId);
+        if (existingProduct) {
+            imageUrl = existingProduct.imageUrl || '';
+        }
+    }
+
+    const fileInput = document.getElementById('inputFoto');
+    if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran file maksimal 2MB!');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const uploadRes = await fetch('/api/products/seller/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (!uploadRes.ok) {
+                alert('Gagal mengunggah foto produk!');
+                return;
+            }
+            const uploadResult = await uploadRes.json();
+            imageUrl = uploadResult.url;
+        } catch (e) {
+            console.error(e);
+            alert('Terjadi kesalahan saat mengunggah foto!');
+            return;
+        }
+    }
+
+    const payload = { name, category, price, stock, isActive, description, imageUrl };
     
     try {
         let url = '/api/products/seller';
@@ -163,4 +217,34 @@ async function simpanProduk() {
     }
 }
 
-fetchProducts();
+document.addEventListener('DOMContentLoaded', () => {
+    fetchProducts();
+    
+    const inputFoto = document.getElementById('inputFoto');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewContainer = document.getElementById('previewContainer');
+    
+    if (inputFoto) {
+        inputFoto.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Ukuran file maksimal 2MB!');
+                    inputFoto.value = '';
+                    previewContainer.classList.add('hidden');
+                    imagePreview.src = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imagePreview.src = event.target.result;
+                    previewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.classList.add('hidden');
+                imagePreview.src = '';
+            }
+        });
+    }
+});
