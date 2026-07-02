@@ -40,6 +40,7 @@ public class ProductService {
         existingProduct.setDescription(updatedProduct.getDescription());
         existingProduct.setPrice(updatedProduct.getPrice());
         existingProduct.setStock(updatedProduct.getStock());
+        existingProduct.setImageUrl(updatedProduct.getImageUrl());
         if (updatedProduct.getIsActive() != null) {
             existingProduct.setIsActive(updatedProduct.getIsActive());
         }
