@@ -35,3 +35,6 @@ build/
 ### Custom Uploads ###
 /uploads/
 
+### Environment Config Files ###
+.env
+application-local.properties
