@@ -23,7 +23,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/products/public/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/seller/**", "/dashboard-penjual/**", "/stokProduk.html", "/pesananPenjual.html", "/api/products/seller/**").hasRole("SELLER")
+                .requestMatchers("/dashboardPenjual", "/dashboardPenjual.html", "/kelolaProduk", "/kelolaProduk.html", "/stokProduk", "/stokProduk.html", "/pesananPenjual", "/pesananPenjual.html", "/api/products/seller/**").hasRole("SELLER")
                 .requestMatchers("/login", "/login.html", "/registrasi", "/registrasi.html", "/forgot-password", "/forgot-password.html", "/reset-password", "/reset-password.html", "/css/**", "/js/**", "/images/**", "/uploads/**", "/dashboard", "/dashboard.html",
                     "/kategoriMakanan", "/kategoriminuman", "/kategorisnack", "/kategoridessert", "/kategoriAksesoris", "/kategoriTulis", "/kategorikopi", "/kategorijus", "/pesanan", "/pesanan.html",
                     "/kategoriMakanan.html", "/kategoriMinuman.html", "/kategoriSnack.html", "/kategoriDessert.html", "/kategoriAksesoris.html", "/kategoriTulis.html", "/kategoriKopi.html", "/kategoriJus.html").permitAll()

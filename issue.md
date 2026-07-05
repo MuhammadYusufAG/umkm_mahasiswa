@@ -1,24 +1,26 @@
-# Plan: Integrasi Menu Pemesanan dan Detail Pesanan Pembeli
+# Plan: Sistem Pilihan Pesanan (Order Selector) dan Chat Terpisah per Toko
 
-Rencana pengerjaan untuk menghubungkan menu pemesanan di navbar, meningkatkan rincian pembelian, serta menambahkan kemampuan pengiriman catatan/pesan ke penjual bagi pembeli.
+Rencana pengerjaan agar pembeli yang memiliki beberapa pesanan aktif (terutama setelah checkout dari penjual yang berbeda) dapat memilih pesanan mana yang ingin dilihat detailnya dan melakukan chat dengan penjual dari pesanan tersebut secara terpisah di halaman `/pesanan.html`.
 
 ---
 
-## 1. Hubungkan Menu Pemesanan di Navbar
-- Arahkan link **Pemesanan** di navbar (pada `dashboard.html` dan halaman kategori lainnya) dari `href="#"` ke halaman `pesanan.html`.
-- Pastikan navbar di semua halaman pembeli konsisten mengarahkan ke halaman pelacakan pesanan ini.
+## 1. Pembuatan UI Pilihan Pesanan (Order List/Selector)
 
-## 2. Peningkatan Tampilan Detail Pembelian (`pesanan.html` & `pesanan.js`)
-- Tampilkan detail lengkap produk yang dibeli secara dinamis dari API `/api/orders/buyer` (mengambil pesanan terbaru atau daftar riwayat pesanan).
-- Informasi detail yang harus ditampilkan:
-  - Foto produk
-  - Nama produk
-  - Jumlah pembelian (quantity)
-  - Harga satuan & Total harga
-  - Nama penjual/toko
-  - Status pesanan terbaru (`BARU`, `DIPROSES`, `SELESAI`, `DIBATALKAN`)
+#### [MODIFY] [pesanan.html](file:///home/cup/dev/playground/java/vibe-code/umkm/src/main/resources/static/pesanan.html)
+- Tambahkan container daftar pesanan melayang (sidebar atau panel horizontal di bagian atas halaman) yang menampilkan daftar pesanan aktif milik pembeli.
+- Setiap item di daftar pesanan menampilkan minimal: ID Pesanan (`#ORD-xxx`), Nama Toko/Penjual, dan Status Pesanan (`BARU`, `DIPROSES`, dll).
 
-## 3. Fitur Tambah Pesan/Catatan ke Penjual
-- Di dalam halaman detail pesanan (`pesanan.html`), sediakan input teks khusus (atau gunakan integrasi chatbox yang ada) agar pembeli dapat mengetik pesan/catatan tambahan untuk penjual.
-- Hubungkan input tersebut agar mengirim data secara asinkron (`fetch` PATCH/POST) ke backend untuk disimpan ke dalam pesanan terkait.
-- Pastikan setelah pesan dikirim, data catatan pesanan penjual langsung terupdate secara real-time atau ter-refresh.
+## 2. Manajemen Navigasi Detail & Chat Dinamis
+
+#### [MODIFY] [pesanan.js](file:///home/cup/dev/playground/java/vibe-code/umkm/src/main/resources/static/js/pesanan.js)
+- **Tampilkan Daftar Pesanan**:
+  - Ambil semua pesanan pembeli dari `/api/orders/buyer`.
+  - Render semuanya ke dalam UI Pilihan Pesanan yang baru dibuat.
+- **Tukar Tampilan Detail (Toko & Chat)**:
+  - Ketika pembeli mengeklik salah satu pesanan dari daftar:
+    - Set pesanan tersebut sebagai pesanan aktif yang sedang dilihat.
+    - Render ulang detail produk, total harga, status bar, dan ikon status sesuai data pesanan yang dipilih.
+    - Bersihkan kotak chat (`#chatBox`) dan isi ulang chat history berdasarkan kolom `notes` dari pesanan yang dipilih.
+    - Simpan ID pesanan terpilih di `sessionStorage` sebagai `activeOrderId` agar fungsi `kirimChat()` mengirim pesan ke endpoint yang tepat: `PATCH /api/orders/{activeOrderId}/notes`.
+- **Inisialisasi Awal**:
+  - Secara default saat pertama kali masuk ke halaman pesanan, pilih pesanan teratas (pesanan paling baru) untuk ditampilkan.

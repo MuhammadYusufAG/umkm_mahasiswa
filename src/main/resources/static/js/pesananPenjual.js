@@ -42,7 +42,12 @@ function renderPesanan(list) {
         const cfg = statusConfig[p.status] || statusConfig['BARU'];
         
         // format items
-        const itemsStr = p.items && p.items.length > 0 ? p.items.map(i => `${i.productName} x${i.quantity}`).join(', ') : '-';
+        const itemsHtml = p.items && p.items.length > 0 ? p.items.map(i => `
+            <div class="mb-1 text-gray-700">
+                • <span class="font-semibold text-gray-800">${i.productName}</span> x${i.quantity}
+                ${i.notes ? `<span class="text-xs text-red-600 italic block pl-3">Catatan: ${i.notes}</span>` : ''}
+            </div>
+        `).join('') : '-';
         
         // format time
         const date = new Date(p.createdAt);
@@ -71,9 +76,12 @@ function renderPesanan(list) {
         </div>
         <div class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">
             <div><span class="text-gray-400">Pembeli:</span> <span class="font-medium text-gray-700">${p.buyerName || 'Unknown'}</span></div>
-            <div><span class="text-gray-400">Produk:</span> <span class="font-medium text-gray-700">${itemsStr}</span></div>
+            <div>
+                <span class="text-gray-400 block mb-1">Produk:</span> 
+                <div class="pl-2 border-l-2 border-blue-500">${itemsHtml}</div>
+            </div>
             <div><span class="text-gray-400">Total:</span> <span class="font-bold text-blue-600">Rp ${p.totalPrice ? p.totalPrice.toLocaleString('id-ID') : 0}</span></div>
-            <div><span class="text-gray-400">Catatan:</span> <span class="text-gray-600 italic">${p.notes ? p.notes.replace(/\\n/g, '<br>') : '-'}</span></div>
+            <div><span class="text-gray-400">Catatan Chat:</span> <span class="text-gray-600 italic">${p.notes ? p.notes.replace(/\\n/g, '<br>') : '-'}</span></div>
         </div>
     </div>
     <div class="flex gap-2 shrink-0">

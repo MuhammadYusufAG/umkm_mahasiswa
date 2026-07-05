@@ -15,4 +15,12 @@ public class LoginController {
     public String registrasi() {
         return "forward:/registrasi.html";
     }
+
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpServletRequest request) {
+        if (request.getSession(false) != null) {
+            request.getSession().invalidate();
+        }
+        return "redirect:/login";
+    }
 }
