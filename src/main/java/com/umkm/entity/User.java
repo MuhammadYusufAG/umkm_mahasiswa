@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Data
@@ -33,5 +34,6 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Product> products;
 }
