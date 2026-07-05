@@ -1,119 +1,92 @@
 // ==========================
-// DATA PRODUK
+// RENDER PRODUK DINAMIS DARI BACKEND
 // ==========================
 
-const products = [
-    {
-        name: "Nasi Ayam Geprek",
-        price: "20.000",
-        rating: 4.8,
-        image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=500",
-        description: "Nasi hangat dengan ayam geprek pedas gurih ala mahasiswa.",
-        bahan: "Beras, ayam, sambal geprek"
-    },
-    {
-        name: "Mie Goreng Special",
-        price: "18.000",
-        rating: 4.7,
-        image: "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=500",
-        description: "Indomie goreng dengan telur ceplok dan sosis.",
-        bahan: "Mie, telur, sosis, bumbu rahasia"
-    },
-    {
-        name: "Es Kopi Susu",
-        price: "16.000",
-        rating: 4.9,
-        image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500",
-        description: "Kopi susu gula aren segar untuk menemani nugas.",
-        bahan: "Kopi espresso, susu segar, gula aren"
-    },
-    {
-        name: "Thai Tea",
-        price: "15.000",
-        rating: 4.6,
-        image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500",
-        description: "Teh Thailand otentik dengan susu kental manis.",
-        bahan: "Daun teh Thailand, susu"
-    },
-    {
-        name: "Cheese Burger",
-        price: "22.000",
-        rating: 5.0,
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500",
-        description: "Burger dengan patty daging sapi asli dan keju meleleh.",
-        bahan: "Roti burger, beef patty, keju slice, sayuran"
-    }
-];
-
-// ==========================
-// GENERATE STAR RATING
-// ==========================
+function formatRupiah(angka) {
+    return "Rp " + Number(angka).toLocaleString("id-ID");
+}
 
 function generateStars(rating) {
     const totalStars = Math.round(rating);
     let stars = "";
-
     for (let i = 0; i < totalStars; i++) {
         stars += `<i class="fa-solid fa-star"></i>`;
     }
-
     return stars;
 }
 
-// ==========================
-// RENDER PRODUK
-// ==========================
-
 const container = document.getElementById("productContainer");
+let productList = [];
 
-if (container) {
+async function fetchPublicProducts() {
+    if (!container) return;
+    try {
+        const res = await fetch('/api/products/public');
+        if (!res.ok) throw new Error("Gagal mengambil data produk");
+        productList = await res.json();
+        renderProducts(productList);
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Gagal memuat produk</div>`;
+    }
+}
+
+function renderProducts(products) {
+    container.innerHTML = "";
+    if (products.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Tidak ada produk ditemukan</div>`;
+        return;
+    }
+    
     products.forEach(product => {
-        const safeDesc = product.description.replace(/'/g, "\\'");
-        const safeBahan = product.bahan.replace(/'/g, "\\'");
+        const rating = 4.8; // default rating mockup
+        const safeDesc = (product.description || "").replace(/'/g, "\\'");
+        const safeBahan = "-";
         const encodedName = encodeURIComponent(product.name);
+        const isTersedia = product.stock > 0;
         
         container.innerHTML += `
-            <div class="bg-white rounded-2xl shadow overflow-hidden hover:shadow-lg transition flex flex-col">
-
+            <div class="bg-white rounded-2xl shadow overflow-hidden hover:shadow-lg transition flex flex-col justify-between">
                 <img
-                    src="${product.image}"
+                    src="${product.imageUrl || 'https://placehold.co/500x400?text=No+Image'}"
                     alt="${product.name}"
                     class="w-full h-44 object-cover cursor-pointer"
-                    onclick="bukaModalDeskripsi('${product.name}', '${product.price}', '${product.image}', '${safeDesc}', '${safeBahan}')">
+                    onclick="bukaModalDeskripsi('${product.name}', ${product.price}, '${product.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${safeDesc}', '${safeBahan}')">
 
-                <div class="p-4 flex-1 flex flex-col">
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-semibold text-gray-800">${product.name}</h4>
 
-                    <h4 class="font-semibold text-gray-800">
-                        ${product.name}
-                    </h4>
-
-                    <div class="flex items-center gap-2 mt-2">
-                        <div class="text-yellow-400 flex gap-1">
-                            ${generateStars(product.rating)}
+                        <div class="flex items-center gap-2 mt-2">
+                            <div class="text-yellow-400 flex gap-1">
+                                ${generateStars(rating)}
+                            </div>
+                            <span class="text-sm text-gray-600">(${rating})</span>
                         </div>
 
-                        <span class="text-sm text-gray-600">
-                            (${product.rating})
-                        </span>
-                    </div>
-
-                    <div class="font-bold text-blue-700 mt-3 mb-2">
-                        Rp ${product.price}
+                        <div class="font-bold text-blue-700 mt-3 mb-2">
+                            ${formatRupiah(product.price)}
+                        </div>
+                        
+                        ${!isTersedia ? `
+                        <p class="text-red-600 font-semibold text-sm mt-1 mb-2">
+                            <i class="fa-solid fa-circle-xmark"></i> Stok Tidak Tersedia
+                        </p>` : ''}
                     </div>
                     
-                    <div class="mt-auto">
-                        <div class="qty-control flex items-center justify-between bg-gray-100 rounded-xl px-3 py-2 mb-2">
-                            <button type="button" onclick="kurangQty('${encodedName}')" class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">−</button>
+                    <div>
+                        <div class="qty-control flex items-center justify-between bg-gray-100 rounded-xl px-3 py-2 mb-2 ${!isTersedia ? 'opacity-50' : ''}">
+                            <button type="button" onclick="kurangQty('${encodedName}')" class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>−</button>
                             <span id="qty-${encodedName}" class="qty-value font-semibold">1</span>
-                            <button type="button" onclick="tambahQty('${encodedName}')" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold">+</button>
+                            <button type="button" onclick="tambahQty('${encodedName}')" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>+</button>
                         </div>
-                        <button onclick="beliRekomendasi('${product.name}', '${product.price}', '${product.image}', '${encodedName}')" class="w-full bg-blue-700 text-white py-2 rounded-xl hover:bg-blue-800 transition">
-                            Beli
+                        <button onclick="beliRekomendasi('${product.name}', ${product.price}, '${product.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${encodedName}')" 
+                                class="w-full py-2 rounded-xl text-white font-semibold transition ${isTersedia ? 'bg-blue-700 hover:bg-blue-800' : 'bg-gray-400 cursor-not-allowed'}"
+                                ${!isTersedia ? 'disabled' : ''}>
+                            ${isTersedia ? 'Beli' : 'Stok Habis'}
                         </button>
                     </div>
-
                 </div>
-
             </div>
         `;
     });
@@ -121,6 +94,7 @@ if (container) {
 
 function kurangQty(id) {
     const el = document.getElementById(`qty-${id}`);
+    if (!el) return;
     let val = parseInt(el.textContent, 10);
     if (val > 1) {
         el.textContent = val - 1;
@@ -129,76 +103,82 @@ function kurangQty(id) {
 
 function tambahQty(id) {
     const el = document.getElementById(`qty-${id}`);
+    if (!el) return;
     let val = parseInt(el.textContent, 10);
     el.textContent = val + 1;
 }
 
-function beliRekomendasi(nama, hargaStr, gambar, id) {
-    const hargaInt = parseInt(hargaStr.replace(/\./g, ""), 10);
+function beliRekomendasi(nama, harga, gambar, id) {
     const el = document.getElementById(`qty-${id}`);
     const qty = el ? parseInt(el.textContent, 10) : 1;
     
-    const pesanan = {
-        nama: nama,
-        harga: hargaInt,
-        qty: qty,
-        gambar: gambar
+    // Kirim request buat pesanan ke backend POST /api/orders
+    const payload = {
+        items: [{
+            product: { name: nama },
+            quantity: qty
+        }]
     };
-    sessionStorage.setItem("pesananTerakhir", JSON.stringify(pesanan));
-    window.location.href = "/pesanan";
+    
+    fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(async res => {
+        if (res.ok) {
+            const order = await res.json();
+            sessionStorage.setItem("lastOrderId", order.id);
+            window.location.href = "/pesanan";
+        } else if (res.status === 401 || res.status === 403) {
+            window.location.href = "/login";
+        } else {
+            const err = await res.text();
+            alert(err || "Gagal membuat pesanan");
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        alert("Terjadi kesalahan koneksi");
+    });
 }
 
-// ==========================
-// MODAL DESKRIPSI PRODUK
-// ==========================
-
+// Modal Deskripsi Produk
 const modal = document.getElementById("modalProduk");
 const btnTutupModal = document.getElementById("btnTutupModal");
 
-if (modal) {
-    function tutupModal() {
-        modal.classList.add("hidden");
-    }
-
-    if (btnTutupModal) {
-        btnTutupModal.addEventListener("click", tutupModal);
-    }
-
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            tutupModal();
-        }
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            tutupModal();
-        }
-    });
-}
-
-function formatRupiah(angka) {
-    return "Rp " + Number(angka).toLocaleString("id-ID");
-}
-
-function bukaModalDeskripsi(nama, hargaStr, gambar, deskripsi, bahan) {
+function bukaModalDeskripsi(nama, harga, gambar, deskripsi, bahan) {
     if (!modal) return;
-    
     document.getElementById("modalImg").src = gambar;
     document.getElementById("modalNama").textContent = nama;
-    document.getElementById("modalHarga").textContent = "Rp " + hargaStr;
-    document.getElementById("modalDeskripsi").textContent = deskripsi;
-    document.getElementById("modalBahan").textContent = bahan;
-    
+    document.getElementById("modalHarga").textContent = formatRupiah(harga);
+    document.getElementById("modalDeskripsi").textContent = deskripsi || '-';
+    document.getElementById("modalBahan").textContent = bahan || '-';
     modal.classList.remove("hidden");
 }
 
+function tutupModal() {
+    if (modal) modal.classList.add("hidden");
+}
+
+if (btnTutupModal) btnTutupModal.addEventListener("click", tutupModal);
+if (modal) {
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) tutupModal();
+    });
+}
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") tutupModal();
+});
+
+// Load awal untuk data produk
+fetchPublicProducts();
+
 // ==========================
-// BANNER CAROUSEL
+// BANNER CAROUSEL & ROLE CHECK
 // ==========================
 
 document.addEventListener("DOMContentLoaded", () => {
-
     const slides = document.querySelectorAll(".banner-slide");
     const dots = document.querySelectorAll(".dot");
 
@@ -207,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentSlide = 0;
 
     function showSlide(index) {
-
         slides.forEach(slide => {
             slide.classList.remove("opacity-100");
             slide.classList.add("opacity-0");
@@ -233,7 +212,6 @@ document.addEventListener("DOMContentLoaded", () => {
         currentSlide = (currentSlide + 1) % slides.length;
         showSlide(currentSlide);
     }, 3000);
-
 });
 
 // Category Card Navigation
