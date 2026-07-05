@@ -248,3 +248,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+
+// Check User Role for Data UMKM Navbar Link
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+            const user = await res.json();
+            const navbarDataUmkm = document.getElementById('navbarDataUmkm');
+            if (navbarDataUmkm && user.role === 'SELLER') {
+                navbarDataUmkm.classList.remove('hidden');
+                navbarDataUmkm.setAttribute('href', '/dashboardPenjual');
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memeriksa role pengguna:", e);
+    }
+});
