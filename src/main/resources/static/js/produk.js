@@ -138,7 +138,7 @@ function beliRekomendasi(nama, harga, gambar, id) {
     // Simpan payload order pembeli
     const payload = {
         items: [{
-            product: { name: nama },
+            productId: id,
             quantity: qty
         }]
     };

@@ -115,7 +115,7 @@ function beliRekomendasi(nama, harga, gambar, id) {
     // Kirim request buat pesanan ke backend POST /api/orders
     const payload = {
         items: [{
-            product: { name: nama },
+            productId: id,
             quantity: qty
         }]
     };
