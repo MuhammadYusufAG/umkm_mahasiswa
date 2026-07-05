@@ -59,7 +59,7 @@ function renderProducts(list) {
     container.innerHTML = list.map(p => {
         const rating = 4.8; // default rating mockup
         const safeDesc = (p.description || '').replace(/'/g, "\\'");
-        const safeBahan = '-';
+        const safeBahan = (p.ingredients || '').replace(/'/g, "\\'");
         const isTersedia = p.stock > 0;
         const encodedName = encodeURIComponent(p.name);
         
