@@ -150,6 +150,37 @@ public class AuthController {
 
         return ResponseEntity.ok("Password berhasil diubah!");
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(401).body(new ErrorResponse("Unauthorized"));
+        }
+
+        String username = auth.getName();
+        Optional<User> userOpt = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username));
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(new ErrorResponse("User not found"));
+        }
+
+        User user = userOpt.get();
+        return ResponseEntity.ok(new UserResponse(user.getUsername(), user.getEmail(), user.getRole().name()));
+    }
+}
+
+@Data
+class UserResponse {
+    private String username;
+    private String email;
+    private String role;
+    public UserResponse(String username, String email, String role) {
+        this.username = username;
+        this.email = email;
+        this.role = role;
+    }
 }
 
 @Data
