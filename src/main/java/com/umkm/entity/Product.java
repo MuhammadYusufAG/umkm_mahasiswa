@@ -37,6 +37,8 @@ public class Product {
 
     private String imageUrl;
 
+    private String ingredients;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;

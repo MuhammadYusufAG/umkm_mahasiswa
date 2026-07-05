@@ -41,7 +41,7 @@ function renderProducts(products) {
     products.forEach(product => {
         const rating = 4.8; // default rating mockup
         const safeDesc = (product.description || "").replace(/'/g, "\\'");
-        const safeBahan = "-";
+        const safeBahan = (product.ingredients || "").replace(/'/g, "\\'");
         const encodedName = encodeURIComponent(product.name);
         const isTersedia = product.stock > 0;
         

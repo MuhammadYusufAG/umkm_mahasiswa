@@ -78,7 +78,7 @@ function openModal(reset = true) {
     if (reset) {
         editId = null;
         document.getElementById('modalTitle').textContent = 'Tambah Produk';
-        ['inputNama', 'inputHarga', 'inputStok', 'inputDeskripsi'].forEach(id => document.getElementById(id).value = '');
+        ['inputNama', 'inputHarga', 'inputStok', 'inputDeskripsi', 'inputBahan'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('inputKategori').value = '';
         document.getElementById('inputStatus').value = 'Aktif';
         document.getElementById('inputFoto').value = '';
@@ -106,6 +106,7 @@ function editProduk(id) {
     document.getElementById('inputStok').value = p.stock;
     document.getElementById('inputStatus').value = p.isActive ? 'Aktif' : 'Nonaktif';
     document.getElementById('inputDeskripsi').value = p.description || '';
+    document.getElementById('inputBahan').value = p.ingredients || '';
     
     const previewContainer = document.getElementById('previewContainer');
     const imagePreview = document.getElementById('imagePreview');
@@ -149,6 +150,7 @@ async function simpanProduk() {
     const stock = parseInt(document.getElementById('inputStok').value);
     const isActive = document.getElementById('inputStatus').value === 'Aktif';
     const description = document.getElementById('inputDeskripsi').value.trim();
+    const ingredients = document.getElementById('inputBahan').value.trim();
 
     if (!name || !category || !price || isNaN(stock)) {
         alert('Mohon lengkapi semua field wajib!');
@@ -190,7 +192,7 @@ async function simpanProduk() {
         }
     }
 
-    const payload = { name, category, price, stock, isActive, description, imageUrl };
+    const payload = { name, category, price, stock, isActive, description, ingredients, imageUrl };
     
     try {
         let url = '/api/products/seller';
