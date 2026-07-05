@@ -76,11 +76,11 @@ function renderProducts(products) {
                     
                     <div>
                         <div class="qty-control flex items-center justify-between bg-gray-100 rounded-xl px-3 py-2 mb-2 ${!isTersedia ? 'opacity-50' : ''}">
-                            <button type="button" onclick="kurangQty('${encodedName}')" class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>−</button>
-                            <span id="qty-${encodedName}" class="qty-value font-semibold">1</span>
-                            <button type="button" onclick="tambahQty('${encodedName}')" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>+</button>
+                            <button type="button" onclick="kurangQty(${product.id})" class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>−</button>
+                            <span id="qty-${product.id}" class="qty-value font-semibold">1</span>
+                            <button type="button" onclick="tambahQty(${product.id})" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>+</button>
                         </div>
-                        <button onclick="beliRekomendasi('${product.name}', ${product.price}, '${product.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${encodedName}')" 
+                        <button onclick="beliRekomendasi('${product.name}', ${product.price}, '${product.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', ${product.id})" 
                                 class="w-full py-2 rounded-xl text-white font-semibold transition ${isTersedia ? 'bg-blue-700 hover:bg-blue-800' : 'bg-gray-400 cursor-not-allowed'}"
                                 ${!isTersedia ? 'disabled' : ''}>
                             ${isTersedia ? 'Beli' : 'Stok Habis'}
@@ -115,7 +115,7 @@ function beliRekomendasi(nama, harga, gambar, id) {
     // Kirim request buat pesanan ke backend POST /api/orders
     const payload = {
         items: [{
-            product: { name: nama },
+            productId: id,
             quantity: qty
         }]
     };
@@ -126,10 +126,20 @@ function beliRekomendasi(nama, harga, gambar, id) {
         body: JSON.stringify(payload)
     })
     .then(async res => {
+        if (res.redirected && res.url.includes('/login')) {
+            window.location.href = "/login";
+            return;
+        }
         if (res.ok) {
-            const order = await res.json();
-            sessionStorage.setItem("lastOrderId", order.id);
-            window.location.href = "/pesanan";
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const order = await res.json();
+                sessionStorage.setItem("lastOrderId", order.id);
+                window.location.href = "/pesanan";
+            } else {
+                // If it's not JSON, might be a redirect or error page
+                window.location.href = "/login";
+            }
         } else if (res.status === 401 || res.status === 403) {
             window.location.href = "/login";
         } else {
