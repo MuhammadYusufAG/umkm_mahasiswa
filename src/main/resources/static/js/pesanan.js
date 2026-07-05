@@ -119,7 +119,19 @@ function fetchMyOrders() {
                     ringkasanNama.textContent = item.productName;
                     ringkasanQty.textContent = item.quantity + "x pesanan";
                     
-                    if (item.product && item.product.imageUrl) {
+                    const sellerEl = document.getElementById("ringkasanSeller");
+                    if (sellerEl) {
+                        sellerEl.textContent = lastOrder.sellerName || "-";
+                    }
+
+                    const hargaSatuanEl = document.getElementById("ringkasanHargaSatuan");
+                    if (hargaSatuanEl) {
+                        hargaSatuanEl.textContent = formatRupiah(item.price) + " / pcs";
+                    }
+                    
+                    if (item.productImageUrl) {
+                        ringkasanGambar.src = item.productImageUrl;
+                    } else if (item.product && item.product.imageUrl) {
                         ringkasanGambar.src = item.product.imageUrl;
                     } else {
                         // fallback image
@@ -203,6 +215,16 @@ function kirimChat() {
 
     tambahChat(teks, "saya");
     chatInput.value = "";
+
+    // Kirim catatan ke backend
+    const lastOrderId = sessionStorage.getItem("lastOrderId");
+    if (lastOrderId) {
+        fetch(`/api/orders/${lastOrderId}/notes`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: teks })
+        }).catch(err => console.error("Gagal mengirim catatan", err));
+    }
 
     // balasan otomatis sederhana dari penjual
     setTimeout(() => {

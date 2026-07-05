@@ -42,9 +42,8 @@ function renderProducts(products) {
         const rating = 4.8; // default rating mockup
         const safeDesc = (product.description || "").replace(/'/g, "\\'");
         const safeBahan = (product.ingredients || "").replace(/'/g, "\\'");
-        const encodedName = encodeURIComponent(product.name);
         const isTersedia = product.stock > 0;
-        
+
         container.innerHTML += `
             <div class="bg-white rounded-2xl shadow overflow-hidden hover:shadow-lg transition flex flex-col justify-between">
                 <img

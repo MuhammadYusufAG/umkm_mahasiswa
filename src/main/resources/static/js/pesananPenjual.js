@@ -2,10 +2,10 @@ let pesananData = [];
 let currentTab = 'Semua';
 
 const statusConfig = {
-    'BARU': { badge: 'bg-yellow-100 text-yellow-700', btn: 'bg-blue-600 text-white', label: 'Proses Pesanan', next: 'DIPROSES' },
-    'DIPROSES': { badge: 'bg-blue-100 text-blue-700', btn: 'bg-green-600 text-white', label: 'Tandai Selesai', next: 'SELESAI' },
-    'SELESAI': { badge: 'bg-green-100 text-green-700', btn: null },
-    'DIBATALKAN': { badge: 'bg-red-100 text-red-600', btn: null },
+    'BARU': { badge: 'bg-yellow-100 text-yellow-700' },
+    'DIPROSES': { badge: 'bg-blue-100 text-blue-700' },
+    'SELESAI': { badge: 'bg-green-100 text-green-700' },
+    'DIBATALKAN': { badge: 'bg-red-100 text-red-600' },
 };
 
 function fetchOrders() {
@@ -48,6 +48,19 @@ function renderPesanan(list) {
         const date = new Date(p.createdAt);
         const waktu = date.toLocaleString('id-ID');
 
+        let actionBtns = '';
+        if (p.status === 'BARU') {
+            actionBtns = `
+                <button onclick="prosesPesanan(${p.id})" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition">Terima</button>
+                <button onclick="batalkanPesanan(${p.id})" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200 transition">Batalkan</button>
+            `;
+        } else if (p.status === 'DIPROSES') {
+            actionBtns = `
+                <button onclick="selesaikanPesanan(${p.id})" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition">Selesai</button>
+                <button onclick="batalkanPesanan(${p.id})" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200 transition">Batalkan</button>
+            `;
+        }
+
         return `
 <div class="bg-white rounded-2xl shadow p-6 flex flex-col md:flex-row md:items-center gap-4">
     <div class="flex-1">
@@ -60,11 +73,11 @@ function renderPesanan(list) {
             <div><span class="text-gray-400">Pembeli:</span> <span class="font-medium text-gray-700">${p.buyerName || 'Unknown'}</span></div>
             <div><span class="text-gray-400">Produk:</span> <span class="font-medium text-gray-700">${itemsStr}</span></div>
             <div><span class="text-gray-400">Total:</span> <span class="font-bold text-blue-600">Rp ${p.totalPrice ? p.totalPrice.toLocaleString('id-ID') : 0}</span></div>
-            <div><span class="text-gray-400">Catatan:</span> <span class="text-gray-600 italic">${p.notes || '-'}</span></div>
+            <div><span class="text-gray-400">Catatan:</span> <span class="text-gray-600 italic">${p.notes ? p.notes.replace(/\\n/g, '<br>') : '-'}</span></div>
         </div>
     </div>
     <div class="flex gap-2 shrink-0">
-        ${cfg.btn && p.status === 'BARU' ? `<button onclick="prosesPesanan(${p.id})" class="${cfg.btn} px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition">${cfg.label}</button>` : ''}
+        ${actionBtns}
     </div>
 </div>`;
     }).join('');
@@ -88,15 +101,36 @@ function filterTab(tab, btn) {
 }
 
 function prosesPesanan(id) {
-    fetch(`/api/orders/${id}/process`, { method: 'PATCH' })
-        .then(res => {
-            if (res.ok) {
-                fetchOrders();
-            } else {
-                alert('Gagal memproses pesanan');
-            }
-        })
-        .catch(err => console.error(err));
+    if (confirm('Terima pesanan ini?')) {
+        fetch(`/api/orders/${id}/process`, { method: 'PATCH' })
+            .then(res => {
+                if (res.ok) fetchOrders();
+                else alert('Gagal memproses pesanan');
+            })
+            .catch(err => console.error(err));
+    }
+}
+
+function selesaikanPesanan(id) {
+    if (confirm('Tandai pesanan selesai?')) {
+        fetch(`/api/orders/${id}/complete`, { method: 'PATCH' })
+            .then(res => {
+                if (res.ok) fetchOrders();
+                else alert('Gagal menyelesaikan pesanan');
+            })
+            .catch(err => console.error(err));
+    }
+}
+
+function batalkanPesanan(id) {
+    if (confirm('Batalkan pesanan ini?')) {
+        fetch(`/api/orders/${id}/cancel`, { method: 'PATCH' })
+            .then(res => {
+                if (res.ok) fetchOrders();
+                else alert('Gagal membatalkan pesanan');
+            })
+            .catch(err => console.error(err));
+    }
 }
 
 fetchOrders();

@@ -26,6 +26,7 @@ public class OrderItem {
     private Product product;
 
     private String productName;
+    private String productImageUrl;
     private Integer quantity;
     private java.math.BigDecimal price;
 }

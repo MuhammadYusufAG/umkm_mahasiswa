@@ -61,7 +61,6 @@ function renderProducts(list) {
         const safeDesc = (p.description || '').replace(/'/g, "\\'");
         const safeBahan = (p.ingredients || '').replace(/'/g, "\\'");
         const isTersedia = p.stock > 0;
-        const encodedName = encodeURIComponent(p.name);
         
         return `
 <div class="produk-card bg-white rounded-3xl shadow overflow-hidden flex flex-col justify-between" 

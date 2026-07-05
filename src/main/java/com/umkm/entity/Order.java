@@ -31,6 +31,8 @@ public class Order {
 
     private String buyerName;
 
+    private String sellerName;
+
     private String notes;
 
     private java.math.BigDecimal totalPrice = java.math.BigDecimal.ZERO;
