@@ -12,19 +12,23 @@ Sebelum menjalankan aplikasi, pastikan sistem Anda telah terinstal perangkat lun
 
 ## ⚙️ Konfigurasi Awal
 
-Aplikasi ini membutuhkan koneksi ke database MySQL. Konfigurasi dapat disesuaikan pada file `src/main/resources/application.properties`:
+Aplikasi ini menggunakan Environment Variables untuk mengamankan data kredensial (seperti username/password database) agar tidak terekspos di repositori. 
 
-```properties
-# Ganti dengan username dan password MySQL Anda
-spring.datasource.url=jdbc:mysql://localhost:3306/db_umkm?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=qwertyuiop
+Secara default, aplikasi akan berjalan menggunakan fallback nilai lokal berikut:
+*   `DB_URL`: `jdbc:mysql://localhost:3306/db_umkm?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC`
+*   `DB_USERNAME`: `root`
+*   `DB_PASSWORD`: `qwertyuiop`
 
-# Port aplikasi
-server.port=8081
-```
+Jika Anda perlu menyesuaikan kredensial database di komputer lokal Anda:
+1. Atur Environment Variables di sistem operasi Anda:
+   *   `DB_URL`
+   *   `DB_USERNAME`
+   *   `DB_PASSWORD`
+2. Atau, jalankan aplikasi dengan menyertakan variabel tersebut, contoh:
+   *   Linux/macOS: `DB_PASSWORD=password_anda ./mvnw spring-boot:run`
+   *   Windows (CMD): `set DB_PASSWORD=password_anda && mvnw.cmd spring-boot:run`
+   *   Windows (PowerShell): `$env:DB_PASSWORD="password_anda"; mvnw.cmd spring-boot:run`
 
-*Catatan: Parameter `createDatabaseIfNotExist=true` akan otomatis membuat database `db_umkm` jika belum ada.*
 
 ## 🚀 Cara Menjalankan Aplikasi
 
