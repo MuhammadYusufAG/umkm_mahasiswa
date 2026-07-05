@@ -150,10 +150,19 @@ function beliRekomendasi(nama, harga, gambar, id) {
         body: JSON.stringify(payload)
     })
     .then(async res => {
+        if (res.redirected && res.url.includes('/login')) {
+            window.location.href = "/login";
+            return;
+        }
         if (res.ok) {
-            const order = await res.json();
-            sessionStorage.setItem("lastOrderId", order.id);
-            window.location.href = "/pesanan";
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const order = await res.json();
+                sessionStorage.setItem("lastOrderId", order.id);
+                window.location.href = "/pesanan";
+            } else {
+                window.location.href = "/login";
+            }
         } else if (res.status === 401 || res.status === 403) {
             window.location.href = "/login";
         } else {
