@@ -60,6 +60,7 @@ public class OrderController {
             order.setBuyer(buyer);
             order.setSeller(seller);
             order.setBuyerName(buyer.getUsername());
+            order.setSellerName(seller.getUsername());
             order.setNotes(request.getNotes());
             order.setStatus(OrderStatus.BARU);
 
@@ -73,6 +74,7 @@ public class OrderController {
                     item.setOrder(order);
                     item.setProduct(p);
                     item.setProductName(p.getName());
+                    item.setProductImageUrl(p.getImageUrl());
                     item.setPrice(p.getPrice());
                     item.setQuantity(itemDto.getQuantity() != null ? itemDto.getQuantity() : 1);
                     order.getItems().add(item);
@@ -140,6 +142,79 @@ public class OrderController {
 
         order.setStatus(OrderStatus.DIPROSES);
         orderRepository.save(order);
+        
+        return ResponseEntity.ok(order);
+    }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<?> completeOrder(@PathVariable Long id) {
+        User seller = getAuthenticatedUser();
+        if (seller == null || seller.getRole() != Role.SELLER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Order> orderOpt = orderRepository.findById(id);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Order order = orderOpt.get();
+        if (!order.getSeller().getId().equals(seller.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        order.setStatus(OrderStatus.SELESAI);
+        orderRepository.save(order);
+        
+        return ResponseEntity.ok(order);
+    }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
+        User seller = getAuthenticatedUser();
+        if (seller == null || seller.getRole() != Role.SELLER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Order> orderOpt = orderRepository.findById(id);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Order order = orderOpt.get();
+        if (!order.getSeller().getId().equals(seller.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        order.setStatus(OrderStatus.DIBATALKAN);
+        orderRepository.save(order);
+        
+        return ResponseEntity.ok(order);
+    }
+
+    @PatchMapping("/{id}/notes")
+    public ResponseEntity<?> updateNotes(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        User buyer = getAuthenticatedUser();
+        if (buyer == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Order> orderOpt = orderRepository.findById(id);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Order order = orderOpt.get();
+        if (!order.getBuyer().getId().equals(buyer.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        String newNote = payload.get("notes");
+        if (newNote != null && !newNote.trim().isEmpty()) {
+            String currentNotes = order.getNotes() == null ? "" : order.getNotes() + "\n";
+            order.setNotes(currentNotes + "- " + newNote.trim());
+            orderRepository.save(order);
+        }
         
         return ResponseEntity.ok(order);
     }
