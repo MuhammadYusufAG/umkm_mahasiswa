@@ -103,7 +103,7 @@ function renderProducts(list) {
                 <button type="button" onclick="tambahQty(${p.id})" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>+</button>
             </div>
 
-            <button onclick="beliRekomendasi('${p.name}', ${p.price}, '${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', ${p.id})" 
+            <button onclick="tambahKeKeranjangKategori(${p.id})" 
                     class="btn-beli mt-3 w-full py-2 rounded-xl text-white font-semibold transition ${isTersedia ? 'bg-blue-700 hover:bg-blue-800' : 'bg-gray-400 cursor-not-allowed'}" 
                     ${!isTersedia ? 'disabled' : ''}>
                 ${isTersedia ? 'Beli' : 'Stok Habis'}
@@ -130,49 +130,46 @@ function tambahQty(id) {
     el.textContent = val + 1;
 }
 
-function beliRekomendasi(nama, harga, gambar, id) {
-    const el = document.getElementById(`qty-${id}`);
-    const qty = el ? parseInt(el.textContent, 10) : 1;
+function getCart() {
+    return JSON.parse(localStorage.getItem('cart')) || [];
+}
+
+function saveCart(cart) {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function tambahKeKeranjang(id, sourceList) {
+    const product = sourceList.find(p => p.id === id);
+    if (!product) return;
+
+    let cart = getCart();
+
+    const qtyEl = document.getElementById(`qty-${id}`);
+    const qty = qtyEl ? parseInt(qtyEl.textContent, 10) : 1;
+
+    const existingIndex = cart.findIndex(item => item.id === id);
+    if (existingIndex > -1) {
+        cart[existingIndex].quantity += qty;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            imageUrl: product.imageUrl,
+            quantity: qty,
+            seller: product.seller
+        });
+    }
+
+    saveCart(cart);
+    alert(`${product.name} berhasil ditambahkan ke keranjang!`);
     
-    // Simpan payload order pembeli
-    const payload = {
-        items: [{
-            productId: id,
-            quantity: qty
-        }]
-    };
-    
-    // Kirim request ke backend POST /api/orders
-    fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(async res => {
-        if (res.redirected && res.url.includes('/login')) {
-            window.location.href = "/login";
-            return;
-        }
-        if (res.ok) {
-            const contentType = res.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                const order = await res.json();
-                sessionStorage.setItem("lastOrderId", order.id);
-                window.location.href = "/pesanan";
-            } else {
-                window.location.href = "/login";
-            }
-        } else if (res.status === 401 || res.status === 403) {
-            window.location.href = "/login";
-        } else {
-            const err = await res.text();
-            alert(err || "Gagal membuat pesanan");
-        }
-    })
-    .catch(e => {
-        console.error(e);
-        alert("Terjadi kesalahan koneksi");
-    });
+    // Reset qty selector ke 1
+    if (qtyEl) qtyEl.textContent = "1";
+}
+
+function tambahKeKeranjangKategori(id) {
+    tambahKeKeranjang(id, allProducts);
 }
 
 // Modal Handling

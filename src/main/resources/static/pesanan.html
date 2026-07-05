@@ -36,6 +36,13 @@
 
     <section class="container mx-auto px-6 py-8 max-w-2xl">
 
+        <!-- Selector Pesanan Aktif -->
+        <div id="orderSelectorContainer" class="mb-6 bg-white rounded-3xl p-4 shadow hidden">
+            <h3 class="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">Pilih Pesanan Lacak/Chat</h3>
+            <div id="orderList" class="flex gap-2 overflow-x-auto pb-1">
+            </div>
+        </div>
+
         <!-- Status Pesanan -->
         <div class="bg-white rounded-3xl shadow p-6">
 
@@ -54,17 +61,7 @@
             </p>
 
             <!-- Ringkasan Produk -->
-            <div id="ringkasanProduk" class="mt-6 flex items-center gap-4 bg-gray-50 rounded-2xl p-4">
-                <img id="ringkasanGambar" src="" class="w-16 h-16 object-cover rounded-xl">
-
-                <div class="flex-1">
-                    <p id="ringkasanNama" class="font-semibold"></p>
-                    <p class="text-xs text-gray-400">Toko: <span id="ringkasanSeller" class="font-medium text-gray-600">-</span></p>
-                    <p id="ringkasanQty" class="text-sm text-gray-500 mt-1"></p>
-                    <p id="ringkasanHargaSatuan" class="text-xs text-gray-400"></p>
-                </div>
-
-                <p id="ringkasanTotal" class="font-bold text-blue-700"></p>
+            <div id="ringkasanProduk" class="mt-6 bg-gray-50 rounded-2xl p-4 space-y-2 hidden">
             </div>
 
             <!-- Status Bar -->

@@ -56,6 +56,17 @@ public class OrderController {
             }
             User seller = productOpt.get().getSeller();
 
+            // Validasi: Pastikan semua produk berasal dari penjual yang sama
+            for (OrderItemRequestDTO itemDto : request.getItems()) {
+                Optional<Product> pOpt = productRepository.findById(itemDto.getProductId());
+                if (pOpt.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Produk tidak ditemukan");
+                }
+                if (!pOpt.get().getSeller().getId().equals(seller.getId())) {
+                    return ResponseEntity.badRequest().body("Gagal membuat pesanan. Anda hanya dapat memesan produk dari satu penjual yang sama dalam satu transaksi.");
+                }
+            }
+
             Order order = new Order();
             order.setBuyer(buyer);
             order.setSeller(seller);
@@ -77,6 +88,7 @@ public class OrderController {
                     item.setProductImageUrl(p.getImageUrl());
                     item.setPrice(p.getPrice());
                     item.setQuantity(itemDto.getQuantity() != null ? itemDto.getQuantity() : 1);
+                    item.setNotes(itemDto.getNotes());
                     order.getItems().add(item);
 
                     total = total.add(p.getPrice().multiply(java.math.BigDecimal.valueOf(item.getQuantity())));
@@ -233,10 +245,13 @@ public class OrderController {
     public static class OrderItemRequestDTO {
         private Long productId;
         private Integer quantity;
+        private String notes;
 
         public Long getProductId() { return productId; }
         public void setProductId(Long productId) { this.productId = productId; }
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public String getNotes() { return notes; }
+        public void setNotes(String notes) { this.notes = notes; }
     }
 }
