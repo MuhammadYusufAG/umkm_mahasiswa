@@ -1,180 +1,173 @@
 // ==========================
 // FILE INI DIPAKAI BERSAMA OLEH SEMUA HALAMAN KATEGORI
 // (kategoriMakanan, kategoriminuman, kategorisnack, kategoridessert, kategorikopi, kategorijus)
-// Berisi: kontrol qty (+/-), tombol Beli -> ke halaman pesanan, dan modal deskripsi produk.
 // ==========================
 
 function formatRupiah(angka) {
     return "Rp " + Number(angka).toLocaleString("id-ID");
 }
-// ==========================
-// CEK STATUS STOK
-// ==========================
 
-document.querySelectorAll(".produk-card").forEach(card => {
-
-    if (card.dataset.tersedia === "false") {
-
-        const qtyControl = card.querySelector(".qty-control");
-        const btnBeli = card.querySelector(".btn-beli");
-
-        if (qtyControl) {
-            qtyControl.classList.add("opacity-50");
-        }
-
-        if (btnBeli) {
-            btnBeli.disabled = true;
-            btnBeli.textContent = "Stok Habis";
-            btnBeli.classList.remove("bg-blue-700");
-            btnBeli.classList.add("bg-gray-400", "cursor-not-allowed");
-        }
+function generateStars(rating) {
+    const totalStars = Math.round(rating);
+    let stars = "";
+    for (let i = 0; i < totalStars; i++) {
+        stars += `<i class="fa-solid fa-star"></i>`;
     }
-
-});
-// ==========================
-// FILTER PRODUK
-// ==========================
-
-const filterButtons = document.querySelectorAll(".filter-btn");
-const produkCards = document.querySelectorAll(".produk-card");
-
-if (filterButtons.length > 0) {
-
-    filterButtons.forEach(button => {
-
-        button.addEventListener("click", () => {
-
-            const filter = button.dataset.filter;
-
-            // reset tombol
-            filterButtons.forEach(btn => {
-
-                btn.classList.remove(
-                    "bg-blue-700",
-                    "text-white"
-                );
-
-                btn.classList.add(
-                    "bg-white",
-                    "text-blue-700",
-                    "border",
-                    "border-blue-700"
-                );
-
-            });
-
-            // tombol aktif
-            button.classList.remove(
-                "bg-white",
-                "text-blue-700",
-                "border",
-                "border-blue-700"
-            );
-
-            button.classList.add(
-                "bg-blue-700",
-                "text-white"
-            );
-
-            // filter produk
-            produkCards.forEach(card => {
-
-                const kategori = card.dataset.kategori;
-
-                if (
-                    filter === "all" ||
-                    kategori === filter
-                ) {
-                    card.style.display = "";
-                } else {
-                    card.style.display = "none";
-                }
-
-            });
-
-        });
-
-    });
-
+    return stars;
 }
-// ==========================
-// QTY CONTROL (+ / -)
-// ==========================
 
-document.querySelectorAll(".produk-card").forEach(card => {
+// 1. Identifikasi Kategori Aktif
+const pageTitle = document.title;
+let activeCategory = "";
+if (pageTitle.includes("Makanan")) activeCategory = "Makanan";
+else if (pageTitle.includes("Minuman")) activeCategory = "Minuman";
+else if (pageTitle.includes("Snack")) activeCategory = "Snack";
+else if (pageTitle.includes("Dessert")) activeCategory = "Dessert";
+else if (pageTitle.includes("Kopi")) activeCategory = "Kopi";
+else if (pageTitle.includes("Jus")) activeCategory = "Jus";
+else if (pageTitle.includes("Aksesoris")) activeCategory = "Aksesoris";
+else if (pageTitle.includes("Alat Tulis")) activeCategory = "Alat Tulis";
 
-    const qtyValue = card.querySelector(".qty-value");
-    const btnMinus = card.querySelector(".btn-minus");
-    const btnPlus = card.querySelector(".btn-plus");
+let allProducts = [];
 
-    btnPlus.addEventListener("click", () => {
+// 2. Ambil Container
+const container = document.querySelector('.grid.md\\:grid-cols-3.lg\\:grid-cols-4.gap-6');
 
-        if (card.dataset.tersedia === "false") {
-            return;
+async function loadCategoryProducts() {
+    if (!container) return;
+    try {
+        const res = await fetch('/api/products/public');
+        if (!res.ok) throw new Error("Gagal mengambil data produk");
+        
+        const products = await res.json();
+        // Filter berdasarkan kategori halaman ini
+        allProducts = products.filter(p => p.category === activeCategory);
+        
+        renderProducts(allProducts);
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Gagal memuat produk</div>`;
+    }
+}
+
+function renderProducts(list) {
+    if (list.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Tidak ada produk di kategori ini</div>`;
+        return;
+    }
+    
+    container.innerHTML = list.map(p => {
+        const rating = 4.8; // default rating mockup
+        const safeDesc = (p.description || '').replace(/'/g, "\\'");
+        const safeBahan = '-';
+        const isTersedia = p.stock > 0;
+        const encodedName = encodeURIComponent(p.name);
+        
+        return `
+<div class="produk-card bg-white rounded-3xl shadow overflow-hidden flex flex-col justify-between" 
+     data-rating="${rating}" 
+     data-nama="${p.name}" 
+     data-harga="${p.price}" 
+     data-deskripsi="${safeDesc}" 
+     data-bahan="${safeBahan}"
+     data-tersedia="${isTersedia}">
+    
+    <img src="${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}"
+         class="produk-img w-full h-48 object-cover cursor-pointer"
+         onclick="bukaModal('${p.name}', ${p.price}, '${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${safeDesc}', '${safeBahan}')">
+
+    <div class="p-4 flex-1 flex flex-col justify-between">
+        <div>
+            <h3 class="font-bold">${p.name}</h3>
+            
+            <div class="flex items-center gap-2 mt-1 mb-2">
+                <div class="text-yellow-400 flex gap-1 text-sm">
+                    ${generateStars(rating)}
+                </div>
+                <span class="text-xs text-gray-600">(${rating})</span>
+            </div>
+            
+            <p class="text-blue-700 font-semibold mt-2">
+                ${formatRupiah(p.price)}
+            </p>
+            
+            ${!isTersedia ? `
+            <p class="text-red-600 font-semibold text-sm mt-1">
+                <i class="fa-solid fa-circle-xmark"></i> Stok Tidak Tersedia
+            </p>` : ''}
+        </div>
+
+        <div class="mt-4">
+            <div class="qty-control flex items-center justify-between bg-gray-100 rounded-xl px-3 py-2 ${!isTersedia ? 'opacity-50' : ''}">
+                <button type="button" onclick="kurangQty('${encodedName}')" class="btn-minus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>−</button>
+                <span id="qty-${encodedName}" class="qty-value font-semibold">1</span>
+                <button type="button" onclick="tambahQty('${encodedName}')" class="btn-plus w-8 h-8 rounded-lg bg-white shadow text-blue-700 font-bold" ${!isTersedia ? 'disabled' : ''}>+</button>
+            </div>
+
+            <button onclick="beliRekomendasi('${p.name}', ${p.price}, '${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${encodedName}')" 
+                    class="btn-beli mt-3 w-full py-2 rounded-xl text-white font-semibold transition ${isTersedia ? 'bg-blue-700 hover:bg-blue-800' : 'bg-gray-400 cursor-not-allowed'}" 
+                    ${!isTersedia ? 'disabled' : ''}>
+                ${isTersedia ? 'Beli' : 'Stok Habis'}
+            </button>
+        </div>
+    </div>
+</div>`;
+    }).join('');
+}
+
+function kurangQty(id) {
+    const el = document.getElementById(`qty-${id}`);
+    if (!el) return;
+    let val = parseInt(el.textContent, 10);
+    if (val > 1) {
+        el.textContent = val - 1;
+    }
+}
+
+function tambahQty(id) {
+    const el = document.getElementById(`qty-${id}`);
+    if (!el) return;
+    let val = parseInt(el.textContent, 10);
+    el.textContent = val + 1;
+}
+
+function beliRekomendasi(nama, harga, gambar, id) {
+    const el = document.getElementById(`qty-${id}`);
+    const qty = el ? parseInt(el.textContent, 10) : 1;
+    
+    // Simpan payload order pembeli
+    const payload = {
+        items: [{
+            product: { name: nama },
+            quantity: qty
+        }]
+    };
+    
+    // Kirim request ke backend POST /api/orders
+    fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(async res => {
+        if (res.ok) {
+            const order = await res.json();
+            sessionStorage.setItem("lastOrderId", order.id);
+            window.location.href = "/pesanan";
+        } else if (res.status === 401 || res.status === 403) {
+            window.location.href = "/login";
+        } else {
+            const err = await res.text();
+            alert(err || "Gagal membuat pesanan");
         }
-
-        let qty = parseInt(qtyValue.textContent, 10);
-        qty++;
-        qtyValue.textContent = qty;
+    })
+    .catch(e => {
+        console.error(e);
+        alert("Terjadi kesalahan koneksi");
     });
+}
 
-    btnMinus.addEventListener("click", () => {
-
-        if (card.dataset.tersedia === "false") {
-            return;
-        }
-
-        let qty = parseInt(qtyValue.textContent, 10);
-        if (qty > 0) {
-            qty--;
-        }
-        qtyValue.textContent = qty;
-    });
-
-});
-
-// ==========================
-// TOMBOL BELI -> SIMPAN PESANAN & PINDAH KE HALAMAN PESANAN
-// ==========================
-
-document.querySelectorAll(".btn-beli").forEach(btn => {
-
-    btn.addEventListener("click", () => {
-
-        const card = btn.closest(".produk-card");
-
-        if (card.dataset.tersedia === "false") {
-            alert(card.dataset.nama + " sedang habis stoknya. Silakan pilih produk lain.");
-            return;
-        }
-
-        const qtyValue = card.querySelector(".qty-value");
-        let qty = parseInt(qtyValue.textContent, 10);
-
-        if (qty < 1) {
-            qty = 1;
-            qtyValue.textContent = qty;
-        }
-
-        const pesanan = {
-            nama: card.dataset.nama,
-            harga: parseInt(card.dataset.harga, 10),
-            qty: qty,
-            gambar: card.querySelector(".produk-img").src
-        };
-
-        sessionStorage.setItem("pesananTerakhir", JSON.stringify(pesanan));
-
-        window.location.href = "/pesanan";
-
-    });
-
-});
-
-// ==========================
-// MODAL DESKRIPSI PRODUK (klik foto)
-// ==========================
-
+// Modal Handling
 const modal = document.getElementById("modalProduk");
 const modalImg = document.getElementById("modalImg");
 const modalNama = document.getElementById("modalNama");
@@ -183,66 +176,29 @@ const modalDeskripsi = document.getElementById("modalDeskripsi");
 const modalBahan = document.getElementById("modalBahan");
 const btnTutupModal = document.getElementById("btnTutupModal");
 
-document.querySelectorAll(".produk-img").forEach(img => {
-
-    img.addEventListener("click", () => {
-
-        const card = img.closest(".produk-card");
-
-        modalImg.src = img.src;
-        modalNama.textContent = card.dataset.nama;
-        modalHarga.textContent = formatRupiah(card.dataset.harga);
-        modalDeskripsi.textContent = card.dataset.deskripsi;
-        modalBahan.textContent = card.dataset.bahan;
-
-        modal.classList.remove("hidden");
-
-    });
-
-});
-
-function tutupModal() {
-    modal.classList.add("hidden");
+function bukaModal(nama, harga, gambar, deskripsi, bahan) {
+    if (!modal) return;
+    modalImg.src = gambar;
+    modalNama.textContent = nama;
+    modalHarga.textContent = formatRupiah(harga);
+    modalDeskripsi.textContent = deskripsi || '-';
+    modalBahan.textContent = bahan || '-';
+    modal.classList.remove("hidden");
 }
 
-btnTutupModal.addEventListener("click", tutupModal);
+function tutupModal() {
+    if (modal) modal.classList.add("hidden");
+}
 
-modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-        tutupModal();
-    }
-});
-
+if (btnTutupModal) btnTutupModal.addEventListener("click", tutupModal);
+if (modal) {
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) tutupModal();
+    });
+}
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-        tutupModal();
-    }
+    if (e.key === "Escape") tutupModal();
 });
-// ==========================
-// RENDER RATING BINTANG
-// ==========================
-document.querySelectorAll(".produk-card").forEach(card => {
-    const ratingValue = card.dataset.rating;
-    if (ratingValue) {
-        const ratingNum = parseFloat(ratingValue);
-        const totalStars = Math.round(ratingNum);
-        let starsHtml = "";
-        for (let i = 0; i < totalStars; i++) {
-            starsHtml += `<i class="fa-solid fa-star"></i>`;
-        }
-        
-        // Find the title element to insert the rating below it
-        const titleEl = card.querySelector("h3.font-bold");
-        if (titleEl) {
-            const ratingContainer = document.createElement("div");
-            ratingContainer.className = "flex items-center gap-2 mt-1 mb-2";
-            ratingContainer.innerHTML = `
-                <div class="text-yellow-400 flex gap-1 text-sm">
-                    ${starsHtml}
-                </div>
-                <span class="text-xs text-gray-600">(${ratingValue})</span>
-            `;
-            titleEl.parentNode.insertBefore(ratingContainer, titleEl.nextSibling);
-        }
-    }
-});
+
+// Load awal
+loadCategoryProducts();
