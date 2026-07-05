@@ -17,7 +17,7 @@ Aplikasi ini menggunakan Environment Variables untuk mengamankan data kredensial
 Secara default, aplikasi akan berjalan menggunakan fallback nilai lokal berikut:
 *   `DB_URL`: `jdbc:mysql://localhost:3306/db_umkm?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC`
 *   `DB_USERNAME`: `root`
-*   `DB_PASSWORD`: `qwertyuiop`
+*   `DB_PASSWORD`: ``
 
 Jika Anda perlu menyesuaikan kredensial database di komputer lokal Anda:
 1. Atur Environment Variables di sistem operasi Anda:
