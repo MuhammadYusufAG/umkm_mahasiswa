@@ -56,6 +56,17 @@ public class ProductService {
             throw new RuntimeException("Unauthorized: You can only delete your own products");
         }
         
+        String imageUrl = existingProduct.getImageUrl();
+        if (imageUrl != null && imageUrl.startsWith("/uploads/")) {
+            try {
+                String fileName = imageUrl.substring("/uploads/".length());
+                java.nio.file.Path filePath = java.nio.file.Paths.get("uploads").resolve(fileName);
+                java.nio.file.Files.deleteIfExists(filePath);
+            } catch (java.io.IOException e) {
+                System.err.println("Gagal menghapus file gambar produk: " + e.getMessage());
+            }
+        }
+        
         productRepository.delete(existingProduct);
     }
     
