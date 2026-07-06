@@ -74,6 +74,20 @@ public class OrderController {
                 }
             }
 
+            // Validasi Stok: Pastikan semua produk memiliki stok yang cukup
+            for (OrderItemRequestDTO itemDto : request.getItems()) {
+                Optional<Product> pOpt = productRepository.findById(itemDto.getProductId());
+                if (pOpt.isPresent()) {
+                    Product p = pOpt.get();
+                    int requestedQty = itemDto.getQuantity() != null ? itemDto.getQuantity() : 1;
+                    if (p.getStock() == 0) {
+                        return ResponseEntity.badRequest().body("Stok produk '" + p.getName() + "' telah habis!");
+                    } else if (p.getStock() < requestedQty) {
+                        return ResponseEntity.badRequest().body("Stok produk '" + p.getName() + "' tidak mencukupi. Sisa stok: " + p.getStock());
+                    }
+                }
+            }
+
             Order order = new Order();
             order.setBuyer(buyer);
             order.setSeller(seller);
@@ -88,13 +102,19 @@ public class OrderController {
                 Optional<Product> pOpt = productRepository.findById(itemDto.getProductId());
                 if (pOpt.isPresent()) {
                     Product p = pOpt.get();
+                    int requestedQty = itemDto.getQuantity() != null ? itemDto.getQuantity() : 1;
+                    
+                    // Deduct stock
+                    p.setStock(p.getStock() - requestedQty);
+                    productRepository.save(p);
+
                     OrderItem item = new OrderItem();
                     item.setOrder(order);
                     item.setProduct(p);
                     item.setProductName(p.getName());
                     item.setProductImageUrl(p.getImageUrl());
                     item.setPrice(p.getPrice());
-                    item.setQuantity(itemDto.getQuantity() != null ? itemDto.getQuantity() : 1);
+                    item.setQuantity(requestedQty);
                     item.setNotes(itemDto.getNotes());
                     order.getItems().add(item);
 
@@ -189,6 +209,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/cancel")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
         User seller = getAuthenticatedUser();
         if (seller == null || seller.getRole() != Role.SELLER) {
@@ -203,6 +224,22 @@ public class OrderController {
         Order order = orderOpt.get();
         if (!order.getSeller().getId().equals(seller.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (order.getStatus() == OrderStatus.DIBATALKAN) {
+            return ResponseEntity.badRequest().body("Pesanan sudah dibatalkan sebelumnya");
+        }
+        if (order.getStatus() == OrderStatus.SELESAI) {
+            return ResponseEntity.badRequest().body("Pesanan yang sudah selesai tidak dapat dibatalkan");
+        }
+
+        // Kembalikan stok untuk semua item
+        for (OrderItem item : order.getItems()) {
+            Product p = item.getProduct();
+            if (p != null) {
+                p.setStock(p.getStock() + item.getQuantity());
+                productRepository.save(p);
+            }
         }
 
         order.setStatus(OrderStatus.DIBATALKAN);

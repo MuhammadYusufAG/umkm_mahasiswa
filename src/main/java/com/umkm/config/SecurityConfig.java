@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -28,6 +30,12 @@ public class SecurityConfig {
                     "/kategoriMakanan", "/kategoriminuman", "/kategorisnack", "/kategoridessert", "/kategoriAksesoris", "/kategoriTulis", "/kategorikopi", "/kategorijus", "/pesanan", "/pesanan.html",
                     "/kategoriMakanan.html", "/kategoriMinuman.html", "/kategoriSnack.html", "/kategoriDessert.html", "/kategoriAksesoris.html", "/kategoriTulis.html", "/kategoriKopi.html", "/kategoriJus.html").permitAll()
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(exception -> exception
+                .defaultAuthenticationEntryPointFor(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                    request -> request.getRequestURI().startsWith("/api/")
+                )
             )
             .formLogin(form -> form
                 .loginPage("/login")
