@@ -31,7 +31,14 @@ public class OrderController {
     private ProductRepository productRepository;
 
     private User getAuthenticatedUser() {
-        return userRepository.findById(1L).orElse(null);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        String username = auth.getName();
+        return userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElse(null);
     }
 
     @PostMapping

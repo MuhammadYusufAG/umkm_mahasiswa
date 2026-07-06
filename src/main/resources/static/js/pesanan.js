@@ -21,8 +21,6 @@ const iconSelesai = document.getElementById("iconSelesai");
 const lineSatu = document.getElementById("lineSatu");
 const lineDua = document.getElementById("lineDua");
 
-const btnKonfirmasiPenjual = document.getElementById("btnKonfirmasiPenjual");
-const btnPesananSelesai = document.getElementById("btnPesananSelesai");
 
 function tandaiBaru() {
     statusIcon.innerHTML = `
@@ -43,8 +41,6 @@ function tandaiBaru() {
     lineDua.classList.remove("bg-green-600");
     lineDua.classList.add("bg-gray-200");
 
-    if (btnKonfirmasiPenjual) btnKonfirmasiPenjual.disabled = false;
-    if (btnPesananSelesai) btnPesananSelesai.disabled = true;
 }
 
 function tandaiSudahDikonfirmasi() {
@@ -62,16 +58,6 @@ function tandaiSudahDikonfirmasi() {
     lineSatu.classList.remove("bg-gray-200");
     lineSatu.classList.add("bg-blue-700");
 
-    if (btnKonfirmasiPenjual) {
-        btnKonfirmasiPenjual.disabled = true;
-        btnKonfirmasiPenjual.classList.add("opacity-50", "cursor-not-allowed");
-    }
-
-    if (btnPesananSelesai) {
-        btnPesananSelesai.disabled = false;
-        btnPesananSelesai.classList.remove("bg-gray-300", "text-gray-500", "cursor-not-allowed");
-        btnPesananSelesai.classList.add("bg-green-600", "text-white");
-    }
 }
 
 function tandaiPesananSelesai() {
@@ -89,15 +75,8 @@ function tandaiPesananSelesai() {
     lineDua.classList.remove("bg-gray-200");
     lineDua.classList.add("bg-green-600");
 
-    if (btnPesananSelesai) {
-        btnPesananSelesai.disabled = true;
-        btnPesananSelesai.textContent = "Selesai ✓";
-        btnPesananSelesai.classList.add("opacity-70", "cursor-not-allowed");
-    }
 }
 
-if (btnKonfirmasiPenjual) btnKonfirmasiPenjual.addEventListener("click", tandaiSudahDikonfirmasi);
-if (btnPesananSelesai) btnPesananSelesai.addEventListener("click", tandaiPesananSelesai);
 
 let activeOrderId = null;
 let myOrders = [];
@@ -216,17 +195,6 @@ function displayOrderDetails(order) {
         }
     }
     
-    // Reset status UI
-    if (btnPesananSelesai) {
-        btnPesananSelesai.className = "w-full bg-gray-300 text-gray-500 py-3 rounded-xl font-semibold cursor-not-allowed transition";
-        btnPesananSelesai.textContent = "Pesanan Selesai";
-        btnPesananSelesai.disabled = true;
-    }
-    if (btnKonfirmasiPenjual) {
-        btnKonfirmasiPenjual.className = "w-full bg-blue-700 text-white py-3 rounded-xl font-semibold hover:bg-blue-800 transition";
-        btnKonfirmasiPenjual.disabled = false;
-    }
-
     // Update status UI
     if (order.status === 'BARU') {
         tandaiBaru();
@@ -253,8 +221,6 @@ function displayOrderDetails(order) {
         lineDua.classList.remove("bg-green-600");
         lineDua.classList.add("bg-gray-200");
         
-        if (btnKonfirmasiPenjual) btnKonfirmasiPenjual.disabled = true;
-        if (btnPesananSelesai) btnPesananSelesai.disabled = true;
     }
 
     renderChatHistory(order);
