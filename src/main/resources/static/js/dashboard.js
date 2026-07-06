@@ -349,8 +349,11 @@ if (btnCheckout) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            }).then(res => {
-                if (!res.ok) throw new Error("Gagal membuat salah satu pesanan");
+            }).then(async res => {
+                if (!res.ok) {
+                    const errMsg = await res.text();
+                    throw new Error(errMsg || "Gagal membuat salah satu pesanan");
+                }
                 return res.json();
             });
         });
@@ -368,7 +371,7 @@ if (btnCheckout) {
         })
         .catch(e => {
             console.error(e);
-            alert("Gagal membuat beberapa pesanan. Silakan periksa koneksi atau stok barang.");
+            alert(e.message || "Gagal membuat beberapa pesanan. Silakan periksa koneksi atau stok barang.");
             btnCheckout.disabled = false;
             btnCheckout.textContent = "Pesan Sekarang (Checkout)";
         });
