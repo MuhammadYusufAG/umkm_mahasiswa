@@ -114,46 +114,64 @@ function pilihPesananAktif(id) {
     }
 }
 
+let stompClient = null;
+let currentChatSubscription = null;
+
 function renderChatHistory(order) {
     if (!chatBox) return;
 
-    // Hindari render ulang jika notes tidak berubah untuk mencegah scroll jump
-    const currentNotes = order.notes || "";
-    const lastNotes = chatBox.getAttribute("data-last-notes");
-    if (lastNotes === currentNotes && chatBox.innerHTML.trim() !== "") {
-        return;
-    }
-    chatBox.setAttribute("data-last-notes", currentNotes);
-
-    chatBox.innerHTML = `
-        <div class="flex">
-            <div class="bg-gray-100 rounded-2xl px-4 py-2 max-w-[75%] text-sm">
-                Halo, terima kasih sudah memesan! Pesananmu sedang kami konfirmasi ya 🙏
-            </div>
-        </div>
-    `;
+    // Bersihkan chat box
+    chatBox.innerHTML = '';
     
-    if (order.notes) {
-        const lines = order.notes.split("\n");
-        lines.forEach(line => {
-            let msg = line.trim();
-            if (msg.startsWith("- ")) {
-                msg = msg.substring(2);
+    // Disconnect langganan STOMP sebelumnya jika ada
+    if (currentChatSubscription) {
+        currentChatSubscription.unsubscribe();
+        currentChatSubscription = null;
+    }
+
+    // Ambil history chat via REST API
+    fetch(`/api/chat/${order.id}`)
+        .then(res => res.json())
+        .then(messages => {
+            chatBox.innerHTML = '';
+            
+            // Pesan sambutan
+            const welcomeBubble = document.createElement("div");
+            welcomeBubble.className = "flex";
+            welcomeBubble.innerHTML = `
+                <div class="bg-gray-100 rounded-2xl px-4 py-2 max-w-[75%] text-sm">
+                    Halo, ada yang bisa kami bantu terkait pesanan ini?
+                </div>
+            `;
+            chatBox.appendChild(welcomeBubble);
+
+            // Tampilkan history
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => {
+                    tambahChat(msg.content, msg.senderRole === "BUYER" ? "saya" : "penjual");
+                });
             }
-            if (msg) {
-                // Render message bubble
-                const bubble = document.createElement("div");
-                bubble.className = "flex justify-end";
-                bubble.innerHTML = `
-                    <div class="bg-blue-700 text-white rounded-2xl px-4 py-2 max-w-[75%] text-sm">
-                        ${msg}
-                    </div>
-                `;
-                chatBox.appendChild(bubble);
+            
+            // Koneksi STOMP
+            connectStomp(order.id);
+        })
+        .catch(err => console.error("Gagal memuat histori chat", err));
+}
+
+function connectStomp(orderId) {
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null; // Matikan log debug
+    stompClient.connect({}, function (frame) {
+        currentChatSubscription = stompClient.subscribe('/topic/chat/' + orderId, function (messageOutput) {
+            const msg = JSON.parse(messageOutput.body);
+            // Jika yang kirim bukan saya, tampilkan di kiri (penjual)
+            // Karena ini halaman pembeli, maka pesan BUYER adalah "saya", SELLER adalah "penjual"
+            if (msg.senderRole === "SELLER") {
+                tambahChat(msg.content, "penjual");
             }
         });
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+    });
 }
 
 function displayOrderDetails(order) {
@@ -322,26 +340,20 @@ function kirimChat() {
 
     const teks = chatInput.value.trim();
 
-    if (!teks) {
+    if (!teks || !activeOrderId || !stompClient) {
         return;
     }
 
+    // Tampilkan di UI saya sendiri langsung biar cepat
     tambahChat(teks, "saya");
     chatInput.value = "";
 
-    // Kirim catatan ke backend
-    if (activeOrderId) {
-        fetch(`/api/orders/${activeOrderId}/notes`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notes: teks })
-        }).catch(err => console.error("Gagal mengirim catatan", err));
-    }
-
-    // balasan otomatis sederhana dari penjual
-    setTimeout(() => {
-        tambahChat("Baik, kami catat ya. Terima kasih sudah menghubungi kami 🙏", "penjual");
-    }, 800);
+    // Kirim ke WebSocket STOMP
+    const payload = {
+        content: teks,
+        senderRole: "BUYER"
+    };
+    stompClient.send("/app/chat/" + activeOrderId + "/send", {}, JSON.stringify(payload));
 }
 
 if (btnKirimChat) btnKirimChat.addEventListener("click", kirimChat);
