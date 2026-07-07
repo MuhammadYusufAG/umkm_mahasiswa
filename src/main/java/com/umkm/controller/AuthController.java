@@ -9,9 +9,14 @@ import org.springframework.web.bind.annotation.*;
 
 import com.umkm.entity.PasswordResetToken;
 import com.umkm.repository.PasswordResetTokenRepository;
+import com.umkm.entity.Order;
+import com.umkm.repository.OrderRepository;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpStatus;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +37,7 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
+    private final OrderRepository orderRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final HttpSessionSecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
@@ -168,6 +174,47 @@ public class AuthController {
 
         User user = userOpt.get();
         return ResponseEntity.ok(new UserResponse(user.getUsername(), user.getEmail(), user.getRole().name()));
+    }
+
+    @DeleteMapping("/me")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> deleteMe(jakarta.servlet.http.HttpServletRequest httpRequest) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Unauthorized"));
+        }
+
+        String username = auth.getName();
+        Optional<User> userOpt = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username));
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("User not found"));
+        }
+
+        User user = userOpt.get();
+
+        // 1. Delete all reset password tokens
+        tokenRepository.deleteByUser(user);
+
+        // 2. Delete all orders associated with user (buyer or seller)
+        List<Order> buyerOrders = orderRepository.findByBuyerIdOrderByCreatedAtDesc(user.getId());
+        orderRepository.deleteAll(buyerOrders);
+
+        List<Order> sellerOrders = orderRepository.findBySellerIdOrderByCreatedAtDesc(user.getId());
+        orderRepository.deleteAll(sellerOrders);
+
+        // 3. Delete the user (cascades to products)
+        userRepository.delete(user);
+
+        // 4. Logout / invalidate session
+        SecurityContextHolder.clearContext();
+        jakarta.servlet.http.HttpSession session = httpRequest.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Akun berhasil dihapus."));
     }
 }
 
