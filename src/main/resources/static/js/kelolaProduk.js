@@ -124,21 +124,21 @@ function editProduk(id) {
 }
 
 async function toggleStatus(id) {
-    if(confirm('Yakin ingin mengubah status produk ini?')) {
+    if(await showConfirm('Yakin ingin mengubah status produk ini?')) {
         try {
             const res = await fetch('/api/products/seller/' + id + '/toggle-status', { method: 'PATCH' });
-            if(res.ok) fetchProducts();
-            else alert('Gagal merubah status');
+            if(res.ok) { fetchProducts(); showToast('Status produk berhasil diubah', 'success'); }
+            else showToast('Gagal merubah status', 'error');
         } catch(e) { console.error(e); }
     }
 }
 
 async function hapusProduk(id) {
-    if (confirm('Yakin ingin menghapus produk ini?')) {
+    if (await showConfirm('Yakin ingin menghapus produk ini?')) {
         try {
             const res = await fetch('/api/products/seller/' + id, { method: 'DELETE' });
-            if(res.ok) fetchProducts();
-            else alert('Gagal menghapus produk');
+            if(res.ok) { fetchProducts(); showToast('Produk berhasil dihapus', 'success'); }
+            else showToast('Gagal menghapus produk', 'error');
         } catch(e) { console.error(e); }
     }
 }
@@ -153,7 +153,7 @@ async function simpanProduk() {
     const ingredients = document.getElementById('inputBahan').value.trim();
 
     if (!name || !category || !price || isNaN(stock)) {
-        alert('Mohon lengkapi semua field wajib!');
+        showToast('Mohon lengkapi semua field wajib!', 'error');
         return;
     }
 
@@ -169,7 +169,7 @@ async function simpanProduk() {
     if (fileInput && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran file maksimal 2MB!');
+            showToast('Ukuran file maksimal 2MB!', 'error');
             return;
         }
         const formData = new FormData();
@@ -180,14 +180,14 @@ async function simpanProduk() {
                 body: formData
             });
             if (!uploadRes.ok) {
-                alert('Gagal mengunggah foto produk!');
+                showToast('Gagal mengunggah foto produk!', 'error');
                 return;
             }
             const uploadResult = await uploadRes.json();
             imageUrl = uploadResult.url;
         } catch (e) {
             console.error(e);
-            alert('Terjadi kesalahan saat mengunggah foto!');
+            showToast('Terjadi kesalahan saat mengunggah foto!', 'error');
             return;
         }
     }
@@ -211,8 +211,9 @@ async function simpanProduk() {
         if (res.ok) {
             closeModal();
             fetchProducts();
+            showToast('Produk berhasil disimpan', 'success');
         } else {
-            alert('Gagal menyimpan produk');
+            showToast('Gagal menyimpan produk', 'error');
         }
     } catch(e) {
         console.error(e);
@@ -231,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (file) {
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('Ukuran file maksimal 2MB!');
+                    showToast('Ukuran file maksimal 2MB!', 'error');
                     inputFoto.value = '';
                     previewContainer.classList.add('hidden');
                     imagePreview.src = '';

@@ -157,7 +157,7 @@ function tambahKeKeranjang(id, sourceList) {
     }
 
     saveCart(cart);
-    alert(`${product.name} berhasil ditambahkan ke keranjang!`);
+    showToast(`${product.name} berhasil ditambahkan ke keranjang!`, 'success');
     
     // Reset qty selector ke 1
     if (qtyEl) qtyEl.textContent = "1";
@@ -327,7 +327,7 @@ if (btnCheckout) {
         });
         
         if (hasInvalidItems) {
-            alert("Keranjang belanja Anda mengandung produk dari versi aplikasi sebelumnya. Mohon kosongkan keranjang dan masukkan kembali produk Anda agar bisa memproses checkout.");
+            showToast("Keranjang belanja Anda mengandung produk dari versi aplikasi sebelumnya. Mohon kosongkan keranjang dan masukkan kembali produk Anda agar bisa memproses checkout.", 'error');
             btnCheckout.disabled = false;
             btnCheckout.textContent = "Pesan Sekarang (Checkout)";
             return;
@@ -371,7 +371,7 @@ if (btnCheckout) {
         })
         .catch(e => {
             console.error(e);
-            alert(e.message || "Gagal membuat beberapa pesanan. Silakan periksa koneksi atau stok barang.");
+            showToast(e.message || "Gagal membuat beberapa pesanan. Silakan periksa koneksi atau stok barang.", 'error');
             btnCheckout.disabled = false;
             btnCheckout.textContent = "Pesan Sekarang (Checkout)";
         });

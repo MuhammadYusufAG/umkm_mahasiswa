@@ -11,16 +11,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById("btnLogout").addEventListener("click", () => {
-        if (confirm("Apakah Anda yakin ingin keluar dari akun?")) {
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+        if (await showConfirm("Apakah Anda yakin ingin keluar dari akun?")) {
             window.location.href = "/logout";
         }
     });
 
-    document.getElementById("btnDeleteAccount").addEventListener("click", () => {
-        const confirm1 = confirm("PERINGATAN: Apakah Anda yakin ingin menghapus akun Anda?\nSeluruh data pesanan, produk (jika Anda penjual), dan riwayat chat akan dihapus secara permanen dari database.");
+    document.getElementById("btnDeleteAccount").addEventListener("click", async () => {
+        const confirm1 = await showConfirm("PERINGATAN: Apakah Anda yakin ingin menghapus akun Anda?\nSeluruh data pesanan, produk (jika Anda penjual), dan riwayat chat akan dihapus secara permanen dari database.");
         if (confirm1) {
-            const confirm2 = confirm("TINDAKAN INI TIDAK DAPAT DIBATALKAN.\nApakah Anda benar-benar yakin ingin menghapus akun?");
+            const confirm2 = await showConfirm("TINDAKAN INI TIDAK DAPAT DIBATALKAN.\nApakah Anda benar-benar yakin ingin menghapus akun?");
             if (confirm2) {
                 deleteAccount();
             }
