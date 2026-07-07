@@ -289,6 +289,33 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    @DeleteMapping("/{id}")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> deleteOrder(@PathVariable Long id) {
+        User seller = getAuthenticatedUser();
+        if (seller == null || seller.getRole() != Role.SELLER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Optional<Order> orderOpt = orderRepository.findById(id);
+        if (orderOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Order order = orderOpt.get();
+        if (!order.getSeller().getId().equals(seller.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (order.getStatus() != OrderStatus.SELESAI && order.getStatus() != OrderStatus.DIBATALKAN) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Hanya pesanan yang selesai atau dibatalkan yang dapat dihapus."));
+        }
+
+        orderRepository.delete(order);
+        return ResponseEntity.ok(Map.of("message", "Pesanan berhasil dihapus."));
+    }
+
     // DTO classes
     public static class OrderRequestDTO {
         private String notes;
