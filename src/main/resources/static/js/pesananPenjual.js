@@ -52,6 +52,12 @@ function renderPesanan(list) {
                 <button onclick="selesaikanPesanan(${p.id})" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition">Selesai</button>
                 <button onclick="batalkanPesanan(${p.id})" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-200 transition">Batalkan</button>
             `;
+        } else if (p.status === 'SELESAI' || p.status === 'DIBATALKAN') {
+            actionBtns = `
+                <button onclick="hapusPesanan(${p.id})" class="border border-red-200 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-50 transition" title="Hapus Riwayat Pesanan">
+                    <i class="fa-solid fa-trash mr-1"></i> Hapus
+                </button>
+            `;
         }
 
         return `
@@ -124,6 +130,20 @@ function batalkanPesanan(id) {
             .then(res => {
                 if (res.ok) fetchOrders();
                 else alert('Gagal membatalkan pesanan');
+            })
+            .catch(err => console.error(err));
+    }
+}
+
+function hapusPesanan(id) {
+    if (confirm('Hapus riwayat pesanan ini dari database?')) {
+        fetch(`/api/orders/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    fetchOrders();
+                } else {
+                    res.json().then(err => alert(err.error || 'Gagal menghapus pesanan'));
+                }
             })
             .catch(err => console.error(err));
     }
