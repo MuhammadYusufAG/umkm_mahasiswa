@@ -19,18 +19,6 @@ function fetchOrders() {
         .catch(err => console.error(err));
 }
 
-function updateNewCount() {
-    fetch('/api/orders/seller/count/new')
-        .then(res => res.json())
-        .then(data => {
-            const badges = document.querySelectorAll('.badge-baru');
-            badges.forEach(b => {
-                b.textContent = data.count;
-                b.style.display = data.count > 0 ? 'inline-block' : 'none';
-            });
-        });
-}
-
 function renderPesanan(list) {
     const container = document.getElementById('daftarPesanan');
     if (list.length === 0) {
