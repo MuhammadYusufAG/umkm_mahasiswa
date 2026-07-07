@@ -230,47 +230,48 @@ function filterTab(tab, btn) {
     renderPesanan(filtered);
 }
 
-function prosesPesanan(id) {
-    if (confirm('Terima pesanan ini?')) {
+async function prosesPesanan(id) {
+    if (await showConfirm('Terima pesanan ini?')) {
         fetch(`/api/orders/${id}/process`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal memproses pesanan');
+                if (res.ok) { fetchOrders(); showToast('Pesanan diterima', 'success'); }
+                else showToast('Gagal memproses pesanan', 'error');
             })
             .catch(err => console.error(err));
     }
 }
 
-function selesaikanPesanan(id) {
-    if (confirm('Tandai pesanan selesai?')) {
+async function selesaikanPesanan(id) {
+    if (await showConfirm('Tandai pesanan selesai?')) {
         fetch(`/api/orders/${id}/complete`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal menyelesaikan pesanan');
+                if (res.ok) { fetchOrders(); showToast('Pesanan selesai', 'success'); }
+                else showToast('Gagal menyelesaikan pesanan', 'error');
             })
             .catch(err => console.error(err));
     }
 }
 
-function batalkanPesanan(id) {
-    if (confirm('Batalkan pesanan ini?')) {
+async function batalkanPesanan(id) {
+    if (await showConfirm('Batalkan pesanan ini?')) {
         fetch(`/api/orders/${id}/cancel`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal membatalkan pesanan');
+                if (res.ok) { fetchOrders(); showToast('Pesanan dibatalkan', 'success'); }
+                else showToast('Gagal membatalkan pesanan', 'error');
             })
             .catch(err => console.error(err));
     }
 }
 
-function hapusPesanan(id) {
-    if (confirm('Hapus riwayat pesanan ini dari database?')) {
+async function hapusPesanan(id) {
+    if (await showConfirm('Hapus riwayat pesanan ini dari database?')) {
         fetch(`/api/orders/${id}`, { method: 'DELETE' })
             .then(res => {
                 if (res.ok) {
                     fetchOrders();
+                    showToast('Pesanan berhasil dihapus', 'success');
                 } else {
-                    res.json().then(err => alert(err.error || 'Gagal menghapus pesanan'));
+                    res.json().then(err => showToast(err.error || 'Gagal menghapus pesanan', 'error'));
                 }
             })
             .catch(err => console.error(err));
