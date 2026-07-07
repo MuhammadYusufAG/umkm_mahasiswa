@@ -1,3 +1,10 @@
+if (!window.showToast) {
+    const script = document.createElement('script');
+    script.src = '/js/toast.js';
+    script.async = false;
+    document.head.appendChild(script);
+}
+
 let pesananData = [];
 let currentTab = 'Semua';
 
@@ -234,8 +241,12 @@ function prosesPesanan(id) {
     if (confirm('Terima pesanan ini?')) {
         fetch(`/api/orders/${id}/process`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal memproses pesanan');
+                if (res.ok) {
+                    fetchOrders();
+                    showToast('Pesanan berhasil diterima!', 'success');
+                } else {
+                    showToast('Gagal memproses pesanan', 'error');
+                }
             })
             .catch(err => console.error(err));
     }
@@ -245,8 +256,12 @@ function selesaikanPesanan(id) {
     if (confirm('Tandai pesanan selesai?')) {
         fetch(`/api/orders/${id}/complete`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal menyelesaikan pesanan');
+                if (res.ok) {
+                    fetchOrders();
+                    showToast('Pesanan berhasil diselesaikan!', 'success');
+                } else {
+                    showToast('Gagal menyelesaikan pesanan', 'error');
+                }
             })
             .catch(err => console.error(err));
     }
@@ -256,8 +271,12 @@ function batalkanPesanan(id) {
     if (confirm('Batalkan pesanan ini?')) {
         fetch(`/api/orders/${id}/cancel`, { method: 'PATCH' })
             .then(res => {
-                if (res.ok) fetchOrders();
-                else alert('Gagal membatalkan pesanan');
+                if (res.ok) {
+                    fetchOrders();
+                    showToast('Pesanan berhasil dibatalkan!', 'success');
+                } else {
+                    showToast('Gagal membatalkan pesanan', 'error');
+                }
             })
             .catch(err => console.error(err));
     }
@@ -269,8 +288,9 @@ function hapusPesanan(id) {
             .then(res => {
                 if (res.ok) {
                     fetchOrders();
+                    showToast('Riwayat pesanan berhasil dihapus!', 'success');
                 } else {
-                    res.json().then(err => alert(err.error || 'Gagal menghapus pesanan'));
+                    res.json().then(err => showToast(err.error || 'Gagal menghapus pesanan', 'error'));
                 }
             })
             .catch(err => console.error(err));

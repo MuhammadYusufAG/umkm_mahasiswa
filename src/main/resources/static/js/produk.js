@@ -3,6 +3,13 @@
 // (kategoriMakanan, kategoriminuman, kategorisnack, kategoridessert, kategorikopi, kategorijus)
 // ==========================
 
+if (!window.showToast) {
+    const script = document.createElement('script');
+    script.src = '/js/toast.js';
+    script.async = false;
+    document.head.appendChild(script);
+}
+
 function formatRupiah(angka) {
     return "Rp " + Number(angka).toLocaleString("id-ID");
 }
@@ -162,7 +169,7 @@ function tambahKeKeranjang(id, sourceList) {
     }
 
     saveCart(cart);
-    alert(`${product.name} berhasil ditambahkan ke keranjang!`);
+    showToast(`${product.name} berhasil ditambahkan ke keranjang!`, 'success');
     
     // Reset qty selector ke 1
     if (qtyEl) qtyEl.textContent = "1";

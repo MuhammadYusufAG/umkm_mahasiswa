@@ -1,3 +1,10 @@
+if (!window.showToast) {
+    const script = document.createElement('script');
+    script.src = '/js/toast.js';
+    script.async = false;
+    document.head.appendChild(script);
+}
+
 let stokData = [];
 let restokIdx = null;
 
@@ -90,7 +97,7 @@ function tutupModal() {
 
 async function simpanRestok() {
     const tambah = parseInt(document.getElementById('tambahStok').value);
-    if (!tambah || tambah < 1) { alert('Masukkan jumlah restok yang valid!'); return; }
+    if (!tambah || tambah < 1) { showToast('Masukkan jumlah restok yang valid!', 'error'); return; }
     
     const prod = stokData[restokIdx];
     const updatedStock = prod.stock + tambah;
@@ -105,8 +112,9 @@ async function simpanRestok() {
         if (response.ok) {
             tutupModal();
             fetchProducts();
+            showToast('Stok berhasil diupdate!', 'success');
         } else {
-            alert('Gagal mengupdate stok');
+            showToast('Gagal mengupdate stok', 'error');
         }
     } catch(e) {
         console.error(e);
