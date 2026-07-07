@@ -43,6 +43,11 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<ChatMessage> chatMessages = new ArrayList<>();
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
