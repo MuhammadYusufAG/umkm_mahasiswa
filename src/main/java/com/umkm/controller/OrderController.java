@@ -162,6 +162,20 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("count", count));
     }
 
+    @GetMapping("/seller/count/summary")
+    public ResponseEntity<?> getSellerOrdersSummary() {
+        User seller = getAuthenticatedUser();
+        if (seller == null || seller.getRole() != Role.SELLER) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        long baruCount = orderRepository.countBySellerIdAndStatus(seller.getId(), OrderStatus.BARU);
+        long diprosesCount = orderRepository.countBySellerIdAndStatus(seller.getId(), OrderStatus.DIPROSES);
+        return ResponseEntity.ok(Map.of(
+            "baru", baruCount,
+            "diproses", diprosesCount
+        ));
+    }
+
     @PatchMapping("/{id}/process")
     public ResponseEntity<?> processOrder(@PathVariable Long id) {
         User seller = getAuthenticatedUser();
