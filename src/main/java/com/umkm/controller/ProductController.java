@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/products")
@@ -21,6 +23,29 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService productService;
+    private final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+
+    @GetMapping("/stream")
+    public SseEmitter streamProducts() {
+        SseEmitter emitter = new SseEmitter(0L); // timeout infinite
+        emitters.add(emitter);
+        
+        emitter.onCompletion(() -> emitters.remove(emitter));
+        emitter.onTimeout(() -> emitters.remove(emitter));
+        emitter.onError((e) -> emitters.remove(emitter));
+        
+        return emitter;
+    }
+
+    private void broadcastProductUpdate() {
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(SseEmitter.event().name("product-update").data("updated"));
+            } catch (Exception e) {
+                emitters.remove(emitter);
+            }
+        }
+    }
 
     @GetMapping("/public")
     public ResponseEntity<List<Product>> getActiveProducts() {
@@ -34,23 +59,30 @@ public class ProductController {
 
     @PostMapping("/seller")
     public ResponseEntity<Product> addProduct(@RequestBody Product product, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(productService.addProduct(product, userDetails.getUser()));
+        Product saved = productService.addProduct(product, userDetails.getUser());
+        broadcastProductUpdate();
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/seller/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(productService.updateProduct(id, product, userDetails.getUser()));
+        Product updated = productService.updateProduct(id, product, userDetails.getUser());
+        broadcastProductUpdate();
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/seller/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         productService.deleteProduct(id, userDetails.getUser());
+        broadcastProductUpdate();
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/seller/{id}/toggle-status")
     public ResponseEntity<Product> toggleProductStatus(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(productService.toggleProductStatus(id, userDetails.getUser()));
+        Product toggled = productService.toggleProductStatus(id, userDetails.getUser());
+        broadcastProductUpdate();
+        return ResponseEntity.ok(toggled);
     }
 
     @PostMapping("/seller/upload")

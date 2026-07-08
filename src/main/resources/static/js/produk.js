@@ -207,3 +207,23 @@ document.addEventListener("keydown", (e) => {
 
 // Load awal
 loadCategoryProducts();
+
+// ==========================
+// REAL-TIME PRODUCT UPDATES (SSE)
+// ==========================
+function setupCategoryRealtimeUpdates() {
+    const eventSource = new EventSource('/api/products/stream');
+    
+    eventSource.addEventListener('product-update', function(event) {
+        console.log("Real-time update received:", event.data);
+        loadCategoryProducts(); // Reload products silently
+    });
+
+    eventSource.onerror = function(err) {
+        console.error("SSE Error:", err);
+        eventSource.close();
+        // Reconnect after 5 seconds
+        setTimeout(setupCategoryRealtimeUpdates, 5000);
+    };
+}
+setupCategoryRealtimeUpdates();

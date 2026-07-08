@@ -1,39 +1,35 @@
-# Fitur: Ganti Semua Pop-up Browser Menjadi Notifikasi & Konfirmasi Elegan
+# Fitur: Produk Baru Muncul di Dashboard Secara Real-time
 
 ## Latar Belakang
-Aplikasi saat ini menggunakan dua jenis pop-up bawaan browser yang mengganggu pengalaman pengguna:
-1. **`alert()`** — untuk menampilkan pesan sukses/error. Tampilannya primitif dan memblokir layar.
-2. **`confirm()`** — untuk meminta konfirmasi sebelum aksi (hapus, batalkan, dll). Juga memblokir UI dan tidak konsisten dengan desain.
+Saat ini, ketika penjual menambahkan atau memperbarui produk melalui halaman **Kelola Produk**, perubahan tersebut tidak langsung terlihat di halaman **Dashboard (pembeli)**. Pembeli harus me-*refresh* halaman secara manual untuk melihat produk terbaru.
 
 ## Tujuan
-Ganti **semua** `alert()` dan `confirm()` dengan komponen notifikasi/modal kustom yang terintegrasi dengan desain aplikasi yang sudah ada.
+Ketika penjual menyimpan produk baru (atau memperbarui produk yang sudah ada), halaman dashboard pembeli harus secara otomatis menampilkan produk terbaru **tanpa perlu refresh halaman**.
 
 ---
 
 ## Rencana Penyelesaian (High-Level)
 
-### 1. Buat Toast Notification Global (untuk mengganti `alert()`)
-- Buat file `js/toast.js` berisi fungsi `showToast(message, type)` dengan tipe: `success`, `error`, dan `info`.
-- Toast muncul di pojok kanan atas, menggunakan animasi masuk (slide/fade), dan menghilang otomatis setelah beberapa detik.
-- Style-nya menyesuaikan desain aplikasi yang sudah ada (warna, border-radius, font).
+### 1. Pilihan Pendekatan: Server-Sent Events (SSE)
+Gunakan **Server-Sent Events (SSE)** sebagai cara *backend* mengirim notifikasi ke semua klien yang terhubung secara real-time. SSE lebih cocok dari WebSocket untuk kasus ini karena komunikasinya hanya satu arah (server → client).
 
-### 2. Buat Modal Konfirmasi Global (untuk mengganti `confirm()`)
-- Buat fungsi `showConfirm(message)` yang menampilkan modal konfirmasi kustom.
-- Modal memiliki dua tombol: **Ya, Lanjutkan** dan **Batal**.
-- Fungsi ini mengembalikan sebuah `Promise`, sehingga dapat digunakan dengan `await` sebagai pengganti `confirm()` yang sinkron.
+> **Catatan**: Proyek sudah menggunakan WebSocket (Stomp) untuk fitur chat. SSE adalah opsi yang lebih ringan khusus untuk notifikasi satu arah. Namun jika ingin menyederhanakan, bisa juga menggunakan WebSocket yang sudah ada dengan menambah *topic* baru.
 
-### 3. Hubungkan ke Semua Halaman
-- Muat `toast.js` dan fungsi modal konfirmasi di semua halaman yang memerlukannya.
-- Cara termudah: muat script secara dinamis dari dalam file JS yang sudah ada, sehingga tidak perlu mengubah banyak file HTML.
+### 2. Modifikasi Backend
+- Buat sebuah **endpoint SSE** (misal: `GET /api/products/stream`) yang mempertahankan koneksi terbuka ke semua klien yang sedang membuka dashboard.
+- Setelah operasi *simpan produk* berhasil di `ProductController` (baik POST maupun PUT), kirimkan *event* ke semua klien yang terhubung melalui SSE.
+- *Event* yang dikirim cukup berupa sinyal sederhana (misal: `{ "event": "product-updated" }`) atau data produk terbaru secara lengkap.
 
-### 4. Ganti Semua Penggunaan di File JS
-Ganti `alert(...)` dengan `showToast(...)` dan `confirm(...)` dengan `await showConfirm(...)` di seluruh file berikut:
-- `js/pesananPenjual.js`
-- `js/kelolaProduk.js`
-- `js/dashboard.js`
-- `js/stokProduk.js`
-- `js/produk.js`
+### 3. Modifikasi Frontend (dashboard.js)
+- Saat halaman `dashboard.html` dibuka, buat koneksi SSE ke endpoint `/api/products/stream`.
+- Ketika *event* dari server diterima, panggil ulang fungsi `fetchPublicProducts()` yang sudah ada untuk memuat ulang daftar produk tanpa me-*refresh* seluruh halaman.
+
+### 4. Alternatif: Polling Ringan (Jika SSE Terlalu Kompleks)
+Jika implementasi SSE dianggap terlalu banyak mengubah *backend*, opsi cadangan adalah **polling**: setiap beberapa detik (misal: setiap 10-15 detik), `dashboard.js` secara otomatis memanggil `fetchPublicProducts()` di latar belakang.
+
+---
 
 ## Catatan Penting
-- `showToast` untuk respons aksi (sukses/gagal).
-- `showConfirm` untuk pengganti `confirm()` sebelum aksi destruktif (hapus, batalkan, dll).
+- Prioritaskan pendekatan SSE karena lebih efisien dan profesional.
+- Pastikan koneksi SSE ditutup secara *graceful* ketika pengguna meninggalkan halaman (`window.onbeforeunload`).
+- Jika menggunakan WebSocket yang sudah ada (Stomp/SockJS), cukup tambahkan topic baru, misal `/topic/products`, dan *broadcast* dari backend ketika ada produk yang disimpan.
