@@ -1,35 +1,50 @@
-# Fitur: Produk Baru Muncul di Dashboard Secara Real-time
+# Fitur: Persiapan Deployment ke VPS dengan MariaDB
 
 ## Latar Belakang
-Saat ini, ketika penjual menambahkan atau memperbarui produk melalui halaman **Kelola Produk**, perubahan tersebut tidak langsung terlihat di halaman **Dashboard (pembeli)**. Pembeli harus me-*refresh* halaman secara manual untuk melihat produk terbaru.
-
-## Tujuan
-Ketika penjual menyimpan produk baru (atau memperbarui produk yang sudah ada), halaman dashboard pembeli harus secara otomatis menampilkan produk terbaru **tanpa perlu refresh halaman**.
+Aplikasi saat ini berjalan di lingkungan lokal menggunakan MySQL. Untuk dipindahkan ke VPS, dibutuhkan beberapa penyesuaian agar aplikasi dapat berjalan dengan baik menggunakan **MariaDB**, serta menjadi lebih aman dan mudah dikonfigurasi di server produksi.
 
 ---
 
-## Rencana Penyelesaian (High-Level)
+## Rencana Persiapan (High-Level)
 
-### 1. Pilihan Pendekatan: Server-Sent Events (SSE)
-Gunakan **Server-Sent Events (SSE)** sebagai cara *backend* mengirim notifikasi ke semua klien yang terhubung secara real-time. SSE lebih cocok dari WebSocket untuk kasus ini karena komunikasinya hanya satu arah (server → client).
+### 1. Kompatibilitas Database: MySQL → MariaDB
+MariaDB kompatibel dengan MySQL, sehingga perubahan yang dibutuhkan minimal:
+- Di `pom.xml`: Tambahkan dependensi **MariaDB JDBC Connector** (`org.mariadb.jdbc:mariadb-java-client`) sebagai alternatif atau pengganti `mysql-connector-j`.
+- Di `application.properties`: Ubah URL koneksi dari `jdbc:mysql://` menjadi `jdbc:mariadb://`. Ubah juga `driver-class-name` ke driver MariaDB (`org.mariadb.jdbc.Driver`).
+- Pastikan `spring.jpa.properties.hibernate.dialect` tetap menggunakan `MySQLDialect` atau diganti ke `MariaDBDialect` jika tersedia di versi Hibernate yang dipakai.
 
-> **Catatan**: Proyek sudah menggunakan WebSocket (Stomp) untuk fitur chat. SSE adalah opsi yang lebih ringan khusus untuk notifikasi satu arah. Namun jika ingin menyederhanakan, bisa juga menggunakan WebSocket yang sudah ada dengan menambah *topic* baru.
+### 2. Manajemen Konfigurasi dengan Spring Profiles
+Saat ini semua konfigurasi ada dalam satu file `application.properties`. Untuk kebutuhan VPS (produksi), pisahkan konfigurasi menjadi dua profil:
+- `application.properties`: Berisi konfigurasi umum dan default (development).
+- `application-prod.properties`: Berisi konfigurasi khusus produksi (koneksi MariaDB VPS, port, dsb). File ini **tidak** perlu di-commit ke GitHub (tambahkan ke `.gitignore`).
+- Di VPS, jalankan aplikasi dengan mengaktifkan profil produksi: `java -jar umkm.jar --spring.profiles.active=prod`.
 
-### 2. Modifikasi Backend
-- Buat sebuah **endpoint SSE** (misal: `GET /api/products/stream`) yang mempertahankan koneksi terbuka ke semua klien yang sedang membuka dashboard.
-- Setelah operasi *simpan produk* berhasil di `ProductController` (baik POST maupun PUT), kirimkan *event* ke semua klien yang terhubung melalui SSE.
-- *Event* yang dikirim cukup berupa sinyal sederhana (misal: `{ "event": "product-updated" }`) atau data produk terbaru secara lengkap.
+### 3. Konfigurasi Sensitif via Environment Variables
+Pastikan data sensitif (password database, kunci rahasia, dll) tidak di-hardcode, melainkan dibaca dari *environment variable* sistem. Pola `${DB_PASSWORD}` yang sudah ada di `application.properties` sudah benar, tinggal pastikan variabel-variabel tersebut di-set di VPS (misalnya melalui file `/etc/environment` atau `systemd` service unit).
 
-### 3. Modifikasi Frontend (dashboard.js)
-- Saat halaman `dashboard.html` dibuka, buat koneksi SSE ke endpoint `/api/products/stream`.
-- Ketika *event* dari server diterima, panggil ulang fungsi `fetchPublicProducts()` yang sudah ada untuk memuat ulang daftar produk tanpa me-*refresh* seluruh halaman.
+### 4. Keamanan Produksi
+- Ubah `spring.jpa.hibernate.ddl-auto` dari `update` menjadi `validate` atau `none` di profil produksi. Ini untuk mencegah Hibernate mengubah struktur database secara otomatis di server produksi.
+- Nonaktifkan `spring.jpa.show-sql=true` di profil produksi agar log SQL tidak membanjiri log server.
+- Pertimbangkan menambahkan konfigurasi HTTPS / SSL di level Nginx sebagai *reverse proxy* di depan aplikasi.
 
-### 4. Alternatif: Polling Ringan (Jika SSE Terlalu Kompleks)
-Jika implementasi SSE dianggap terlalu banyak mengubah *backend*, opsi cadangan adalah **polling**: setiap beberapa detik (misal: setiap 10-15 detik), `dashboard.js` secara otomatis memanggil `fetchPublicProducts()` di latar belakang.
+### 5. Build Artifact (JAR File)
+- Pastikan proyek dapat di-build menjadi file `.jar` yang berdiri sendiri (*fat JAR / uber JAR*) menggunakan perintah: `./mvnw clean package -DskipTests`.
+- Hasilnya adalah file `target/umkm-*.jar` yang bisa langsung dijalankan di VPS.
+
+### 6. Konfigurasi Upload File di VPS
+- Saat ini, file upload disimpan di folder `/uploads/` relatif terhadap direktori kerja aplikasi.
+- Di VPS, tentukan dan pastikan path absolut untuk folder upload ada dan memiliki izin tulis yang benar.
+- Konfigurasi di `application-prod.properties` untuk menentukan path absolut folder upload (jika diperlukan).
+
+### 7. Opsional: Docker Compose untuk Kemudahan Deploy
+Siapkan file `docker-compose.yml` yang berisi dua service:
+- Service `db`: MariaDB dengan database `db_umkm`.
+- Service `app`: Aplikasi Spring Boot yang membaca konfigurasi dari environment variable.
+
+Pendekatan ini membuat deployment di VPS menjadi sangat sederhana hanya dengan menjalankan `docker-compose up -d`.
 
 ---
 
 ## Catatan Penting
-- Prioritaskan pendekatan SSE karena lebih efisien dan profesional.
-- Pastikan koneksi SSE ditutup secara *graceful* ketika pengguna meninggalkan halaman (`window.onbeforeunload`).
-- Jika menggunakan WebSocket yang sudah ada (Stomp/SockJS), cukup tambahkan topic baru, misal `/topic/products`, dan *broadcast* dari backend ketika ada produk yang disimpan.
+- Prioritaskan poin 1–5 sebagai minimum yang wajib dikerjakan sebelum pindah ke VPS.
+- Poin 6 dan 7 bersifat opsional namun sangat direkomendasikan untuk kemudahan jangka panjang.
