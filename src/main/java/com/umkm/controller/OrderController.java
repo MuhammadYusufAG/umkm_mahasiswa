@@ -128,11 +128,26 @@ public class OrderController {
             order.setTotalPrice(total);
             Order savedOrder = orderRepository.save(order);
 
-            // Send real-time order notification via WebSocket
-            try {
-                messagingTemplate.convertAndSend("/topic/orders/" + seller.getId(), "new-order");
-            } catch (Exception e) {
-                System.err.println("Gagal mengirim notifikasi WebSocket: " + e.getMessage());
+            // Send real-time order notification via WebSocket after transaction commits
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                messagingTemplate.convertAndSend("/topic/orders/" + seller.getId(), "new-order");
+                            } catch (Exception e) {
+                                System.err.println("Gagal mengirim notifikasi WebSocket setelah commit: " + e.getMessage());
+                            }
+                        }
+                    }
+                );
+            } else {
+                try {
+                    messagingTemplate.convertAndSend("/topic/orders/" + seller.getId(), "new-order");
+                } catch (Exception e) {
+                    System.err.println("Gagal mengirim notifikasi WebSocket: " + e.getMessage());
+                }
             }
 
             return ResponseEntity.ok(savedOrder);
