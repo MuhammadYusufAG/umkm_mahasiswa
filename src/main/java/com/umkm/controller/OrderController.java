@@ -30,9 +30,6 @@ public class OrderController {
     @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
-    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
-
     private User getAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
@@ -127,13 +124,6 @@ public class OrderController {
 
             order.setTotalPrice(total);
             Order savedOrder = orderRepository.save(order);
-
-            // Send real-time order notification via WebSocket
-            try {
-                messagingTemplate.convertAndSend("/topic/orders/" + seller.getId(), "new-order");
-            } catch (Exception e) {
-                System.err.println("Gagal mengirim notifikasi WebSocket: " + e.getMessage());
-            }
 
             return ResponseEntity.ok(savedOrder);
         } catch (Exception e) {
