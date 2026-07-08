@@ -173,7 +173,7 @@ public class AuthController {
         }
 
         User user = userOpt.get();
-        return ResponseEntity.ok(new UserResponse(user.getUsername(), user.getEmail(), user.getRole().name()));
+        return ResponseEntity.ok(new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name()));
     }
 
     @DeleteMapping("/me")
@@ -220,10 +220,12 @@ public class AuthController {
 
 @Data
 class UserResponse {
+    private Long id;
     private String username;
     private String email;
     private String role;
-    public UserResponse(String username, String email, String role) {
+    public UserResponse(Long id, String username, String email, String role) {
+        this.id = id;
         this.username = username;
         this.email = email;
         this.role = role;
