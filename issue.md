@@ -1,57 +1,59 @@
-# Fitur: Membuat Dokumentasi Skema Database dalam Format SQL
+# Fitur: Database Otomatis Dibuat Saat Deploy ke VPS
 
 ## Latar Belakang
-Saat ini, skema database dibuat secara otomatis oleh Hibernate (Spring JPA) berdasarkan anotasi di kelas Entity Java. Tidak ada file SQL resmi yang mendokumentasikan struktur tabel secara eksplisit. Hal ini menyulitkan proses:
-- Migrasi database ke VPS/MariaDB secara manual
-- Pembuatan database baru dari nol tanpa perlu menjalankan aplikasi terlebih dahulu
-- Pemahaman cepat bagi anggota tim baru tentang struktur data
+Saat ini, konfigurasi produksi (`application-prod.properties`) menggunakan `spring.jpa.hibernate.ddl-auto=validate`. Ini berarti ketika aplikasi pertama kali dijalankan di VPS dengan database MariaDB yang masih kosong, aplikasi akan **langsung error** karena tidak ada tabel yang ditemukan.
 
-## Tujuan
-Membuat file `schema.sql` yang berisi perintah SQL `CREATE TABLE` untuk semua tabel yang ada di database aplikasi ini.
+Kita perlu mekanisme agar database dan semua tabelnya **dibuat secara otomatis** saat pertama kali aplikasi dijalankan di server baru, tanpa perlu menjalankan SQL secara manual.
 
 ---
 
-## Rencana Pembuatan (High-Level)
+## Rencana Penyelesaian (High-Level)
 
-### 1. Identifikasi Semua Tabel
-Berdasarkan Entity yang ada di dalam kode, tabel-tabel yang perlu didokumentasikan adalah:
+### Pilihan Pendekatan: Flyway (Direkomendasikan)
 
-| Nama Tabel | Berdasarkan Entity |
-|---|---|
-| `users` | `User.java` |
-| `products` | `Product.java` |
-| `orders` | `Order.java` |
-| `order_items` | `OrderItem.java` |
-| `chat_messages` | `ChatMessage.java` |
-| `password_reset_token` | `PasswordResetToken.java` |
+Gunakan **Flyway** sebagai solusi *database migration*. Flyway adalah library yang akan:
+1. Secara otomatis mendeteksi file SQL migrasi yang kita sediakan.
+2. Menjalankan file SQL tersebut untuk membuat tabel saat aplikasi pertama kali dijalankan.
+3. Melacak versi migrasi yang sudah dijalankan agar tidak diulang.
 
-### 2. Buat File `schema.sql`
-Buat sebuah file SQL di direktori root proyek dengan nama `schema.sql`.
+### 1. Tambahkan Dependensi Flyway ke `pom.xml`
+Tambahkan dependency `spring-boot-starter-flyway` atau `flyway-core` ke dalam `pom.xml`. Spring Boot akan secara otomatis mendeteksi dan menginisialisasi Flyway.
 
-Isi file ini harus mencakup:
-- Statement `CREATE TABLE IF NOT EXISTS` untuk setiap tabel di atas
-- Definisi kolom lengkap: nama, tipe data, ukuran, dan constraint (`NOT NULL`, `UNIQUE`, `DEFAULT`)
-- Definisi primary key dan foreign key untuk setiap tabel
-- Agar mudah di-reset, sertakan `DROP TABLE IF EXISTS` di bagian awal, **dalam urutan yang benar** (tabel yang memiliki foreign key dihapus lebih dulu dari tabel induknya)
+### 2. Buat File Migrasi SQL
+Flyway membaca file SQL dari direktori `src/main/resources/db/migration/`. Buat sebuah file di sana dengan format nama yang Flyway kenali, misalnya:
+```
+src/main/resources/db/migration/V1__initial_schema.sql
+```
 
-### 3. Detail Skema Berdasarkan Entity
+Isi file ini dapat diambil dari `schema.sql` yang sudah ada di root proyek, namun **tanpa** perintah `DROP TABLE` (karena di produksi kita tidak ingin menghapus data yang sudah ada).
 
-- **`users`**: id (PK), username (UNIQUE NOT NULL), email (UNIQUE NOT NULL), password (NOT NULL), role (ENUM: BUYER/SELLER, NOT NULL)
-- **`products`**: id (PK), name, category, description, price, stock, is_active, image_url, ingredients, seller_id (FK → users.id)
-- **`orders`**: id (PK), buyer_id (FK → users.id), seller_id (FK → users.id), buyer_name, seller_name, notes, total_price, status (ENUM: BARU/DIPROSES/SELESAI/DIBATALKAN), created_at
-- **`order_items`**: id (PK), order_id (FK → orders.id), product_id (FK → products.id), product_name, product_image_url, quantity, price, notes
-- **`chat_messages`**: id (PK), order_id (FK → orders.id), sender_role, content (TEXT), created_at
-- **`password_reset_token`**: id (PK), token, user_id (FK → users.id), expiry_date
+### 3. Sesuaikan Konfigurasi Produksi
+Di `application-prod.properties`, ubah konfigurasi DDL Hibernate agar tidak berkonflik dengan Flyway:
+- Ubah `spring.jpa.hibernate.ddl-auto` dari `validate` menjadi `none` (Flyway yang akan mengurus pembuatan skema, bukan Hibernate).
 
-### 4. Kompatibilitas MariaDB
-Pastikan tipe data dan sintaks SQL yang digunakan kompatibel dengan **MariaDB**:
-- Gunakan `BIGINT AUTO_INCREMENT` untuk kolom id
-- Gunakan `DECIMAL(19,2)` untuk kolom harga
-- Gunakan `ENUM(...)` atau `VARCHAR` untuk kolom status dan role
-- Gunakan `DATETIME` untuk kolom timestamp
+### 4. Konfigurasi Lokal (Development)
+Di `application-local.properties`, Flyway bisa tetap aktif atau dinonaktifkan. Disarankan dinonaktifkan di lokal (`spring.flyway.enabled=false`) karena lokal masih menggunakan `ddl-auto=update` yang lebih fleksibel untuk pengembangan aktif.
 
 ---
 
 ## Catatan Penting
-- File `schema.sql` ini bersifat dokumentasi sekaligus dapat langsung dijalankan untuk membuat database dari nol.
-- Jika sudah ada data penting di database lokal, tambahkan juga file `data.sql` opsional berisi contoh data awal (*seed data*) untuk kemudahan pengembangan.
+- File migrasi Flyway bersifat **tidak boleh diubah setelah di-commit**. Jika ada perubahan skema di masa depan, buat file migrasi baru (misal: `V2__add_column_xyz.sql`).
+- Pendekatan ini juga memudahkan migrasi skema ke depannya secara terstruktur dan terdokumentasi.
+- Alternatif yang lebih sederhana (tapi kurang direkomendasikan untuk produksi) adalah menggunakan `spring.sql.init.mode=always` bersama dengan konfigurasi `spring.datasource.schema=classpath:schema.sql`. Namun, ini kurang andal dibanding Flyway.
+
+---
+
+## Tambahan: Nonaktifkan OpenAPI/Swagger UI di Produksi
+
+Saat ini proyek menggunakan `springdoc-openapi` yang menampilkan Swagger UI (`/swagger-ui.html`) dan dokumentasi API (`/v3/api-docs`). Halaman ini **tidak aman untuk dibuka ke publik** di VPS karena:
+- Mengekspos seluruh daftar endpoint API beserta parameternya.
+- Memungkinkan siapapun mencoba memanggil endpoint langsung dari browser.
+- Membantu *attacker* memetakan celah keamanan aplikasi.
+
+**Langkah yang perlu dilakukan**: Di `application-prod.properties`, tambahkan konfigurasi berikut untuk menonaktifkan Swagger UI sepenuhnya di lingkungan produksi:
+```properties
+springdoc.swagger-ui.enabled=false
+springdoc.api-docs.enabled=false
+```
+
+Di `application-local.properties`, biarkan tetap aktif (default) untuk kemudahan pengembangan.
