@@ -1,50 +1,43 @@
-# Fitur: Persiapan Deployment ke VPS dengan MariaDB
+# Fitur: Notifikasi Real-time Pesanan Masuk di Halaman Penjual
 
 ## Latar Belakang
-Aplikasi saat ini berjalan di lingkungan lokal menggunakan MySQL. Untuk dipindahkan ke VPS, dibutuhkan beberapa penyesuaian agar aplikasi dapat berjalan dengan baik menggunakan **MariaDB**, serta menjadi lebih aman dan mudah dikonfigurasi di server produksi.
+Saat pembeli melakukan checkout, penjual tidak mendapatkan pemberitahuan secara instan.
+Penjual harus me-refresh halaman **Pesanan Penjual** secara manual untuk melihat pesanan baru.
+
+Proyek sudah memiliki infrastruktur **WebSocket (STOMP/SockJS)** yang digunakan di fitur chat.
+Infrastruktur ini bisa dimanfaatkan ulang tanpa menambahkan teknologi baru.
 
 ---
 
-## Rencana Persiapan (High-Level)
+## Rencana (High-Level)
 
-### 1. Kompatibilitas Database: MySQL → MariaDB
-MariaDB kompatibel dengan MySQL, sehingga perubahan yang dibutuhkan minimal:
-- Di `pom.xml`: Tambahkan dependensi **MariaDB JDBC Connector** (`org.mariadb.jdbc:mariadb-java-client`) sebagai alternatif atau pengganti `mysql-connector-j`.
-- Di `application.properties`: Ubah URL koneksi dari `jdbc:mysql://` menjadi `jdbc:mariadb://`. Ubah juga `driver-class-name` ke driver MariaDB (`org.mariadb.jdbc.Driver`).
-- Pastikan `spring.jpa.properties.hibernate.dialect` tetap menggunakan `MySQLDialect` atau diganti ke `MariaDBDialect` jika tersedia di versi Hibernate yang dipakai.
+### 1. Backend — Kirim Notifikasi Saat Pesanan Dibuat
+Di `OrderController`, setelah pesanan berhasil disimpan ke database,
+kirimkan event real-time ke penjual yang bersangkutan menggunakan `SimpMessagingTemplate`.
 
-### 2. Manajemen Konfigurasi dengan Spring Profiles
-Saat ini semua konfigurasi ada dalam satu file `application.properties`. Untuk kebutuhan VPS (produksi), pisahkan konfigurasi menjadi dua profil:
-- `application.properties`: Berisi konfigurasi umum dan default (development).
-- `application-prod.properties`: Berisi konfigurasi khusus produksi (koneksi MariaDB VPS, port, dsb). File ini **tidak** perlu di-commit ke GitHub (tambahkan ke `.gitignore`).
-- Di VPS, jalankan aplikasi dengan mengaktifkan profil produksi: `java -jar umkm.jar --spring.profiles.active=prod`.
+- Topic yang dituju: `/topic/orders/{sellerId}`
+- Payload: cukup string sederhana seperti `"new-order"`
 
-### 3. Konfigurasi Sensitif via Environment Variables
-Pastikan data sensitif (password database, kunci rahasia, dll) tidak di-hardcode, melainkan dibaca dari *environment variable* sistem. Pola `${DB_PASSWORD}` yang sudah ada di `application.properties` sudah benar, tinggal pastikan variabel-variabel tersebut di-set di VPS (misalnya melalui file `/etc/environment` atau `systemd` service unit).
+### 2. Frontend — Dengarkan Notifikasi di Halaman Pesanan Penjual
+Di `pesananPenjual.js`:
 
-### 4. Keamanan Produksi
-- Ubah `spring.jpa.hibernate.ddl-auto` dari `update` menjadi `validate` atau `none` di profil produksi. Ini untuk mencegah Hibernate mengubah struktur database secara otomatis di server produksi.
-- Nonaktifkan `spring.jpa.show-sql=true` di profil produksi agar log SQL tidak membanjiri log server.
-- Pertimbangkan menambahkan konfigurasi HTTPS / SSL di level Nginx sebagai *reverse proxy* di depan aplikasi.
+- Ambil data user login (termasuk `id` penjual) dari `GET /api/auth/me`.
+- Buka koneksi STOMP WebSocket ke endpoint `/ws`.
+- Subscribe ke topic `/topic/orders/{sellerId}`.
+- Ketika event `"new-order"` diterima:
+  - Refresh daftar pesanan otomatis (panggil ulang fungsi `fetchOrders()`).
+  - Tampilkan toast notifikasi kepada penjual.
 
-### 5. Build Artifact (JAR File)
-- Pastikan proyek dapat di-build menjadi file `.jar` yang berdiri sendiri (*fat JAR / uber JAR*) menggunakan perintah: `./mvnw clean package -DskipTests`.
-- Hasilnya adalah file `target/umkm-*.jar` yang bisa langsung dijalankan di VPS.
-
-### 6. Konfigurasi Upload File di VPS
-- Saat ini, file upload disimpan di folder `/uploads/` relatif terhadap direktori kerja aplikasi.
-- Di VPS, tentukan dan pastikan path absolut untuk folder upload ada dan memiliki izin tulis yang benar.
-- Konfigurasi di `application-prod.properties` untuk menentukan path absolut folder upload (jika diperlukan).
-
-### 7. Opsional: Docker Compose untuk Kemudahan Deploy
-Siapkan file `docker-compose.yml` yang berisi dua service:
-- Service `db`: MariaDB dengan database `db_umkm`.
-- Service `app`: Aplikasi Spring Boot yang membaca konfigurasi dari environment variable.
-
-Pendekatan ini membuat deployment di VPS menjadi sangat sederhana hanya dengan menjalankan `docker-compose up -d`.
+### 3. Catatan Teknis
+- Library SockJS dan STOMP **sudah tersedia** di halaman `pesananPenjual.html`.
+- Subscribe topic hanya dilakukan jika user memiliki role **SELLER**.
+- Jika koneksi WebSocket terputus, lakukan reconnect otomatis setelah beberapa detik.
 
 ---
 
-## Catatan Penting
-- Prioritaskan poin 1–5 sebagai minimum yang wajib dikerjakan sebelum pindah ke VPS.
-- Poin 6 dan 7 bersifat opsional namun sangat direkomendasikan untuk kemudahan jangka panjang.
+## File yang Perlu Dimodifikasi
+
+| File | Perubahan |
+|------|-----------|
+| `OrderController.java` | Inject `SimpMessagingTemplate`, kirim event setelah pesanan disimpan |
+| `pesananPenjual.js` | Tambahkan koneksi STOMP dan handler event notifikasi |

@@ -279,3 +279,37 @@ async function hapusPesanan(id) {
 }
 
 fetchOrders();
+
+// ==========================================
+// REAL-TIME ORDER NOTIFICATION (STOMP)
+// ==========================================
+let stompClientOrders = null;
+
+function connectOrdersNotification() {
+    fetch('/api/auth/me')
+        .then(res => {
+            if (res.ok) return res.json();
+            throw new Error("Gagal memuat profil");
+        })
+        .then(user => {
+            if (user.role !== 'SELLER') return;
+            const socket = new SockJS('/ws');
+            stompClientOrders = Stomp.over(socket);
+            stompClientOrders.debug = null;
+            stompClientOrders.connect({}, function (frame) {
+                stompClientOrders.subscribe('/topic/orders/' + user.id, function (messageOutput) {
+                    fetchOrders();
+                    if (typeof showToast === 'function') {
+                        showToast('Ada pesanan baru masuk!', 'success');
+                    }
+                });
+            }, function(err) {
+                console.error("Orders STOMP Error, reconnecting in 5s...", err);
+                setTimeout(connectOrdersNotification, 5000);
+            });
+        })
+        .catch(err => console.error(err));
+}
+
+// Inisialisasi koneksi
+connectOrdersNotification();
