@@ -15,7 +15,7 @@ function generateStars(rating) {
     return stars;
 }
 
-const container = document.getElementById("productContainer");
+const container = document.getElementById("productGrid");
 let productList = [];
 
 async function fetchPublicProducts() {
