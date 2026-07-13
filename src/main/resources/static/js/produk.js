@@ -50,6 +50,26 @@ async function loadCategoryProducts() {
     }
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function bukaModalFromElement(element) {
+    const card = element.closest('.produk-card') || element;
+    const nama = card.getAttribute('data-nama');
+    const harga = parseFloat(card.getAttribute('data-harga'));
+    const gambar = card.getAttribute('data-gambar');
+    const deskripsi = card.getAttribute('data-deskripsi');
+    const bahan = card.getAttribute('data-bahan');
+    bukaModal(nama, harga, gambar, deskripsi, bahan);
+}
+
 function renderProducts(list) {
     if (list.length === 0) {
         container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">Tidak ada produk di kategori ini</div>`;
@@ -58,22 +78,25 @@ function renderProducts(list) {
     
     container.innerHTML = list.map(p => {
         const rating = 4.8; // default rating mockup
-        const safeDesc = (p.description || '').replace(/'/g, "\\'");
-        const safeBahan = (p.ingredients || '').replace(/'/g, "\\'");
+        const safeName = escapeHtml(p.name);
+        const safeDesc = escapeHtml(p.description || "");
+        const safeBahan = escapeHtml(p.ingredients || "");
+        const imgUrl = p.imageUrl || 'https://placehold.co/500x400?text=No+Image';
         const isTersedia = p.stock > 0;
         
         return `
 <div class="produk-card bg-white rounded-3xl shadow overflow-hidden flex flex-col justify-between" 
      data-rating="${rating}" 
-     data-nama="${p.name}" 
+     data-nama="${safeName}" 
      data-harga="${p.price}" 
+     data-gambar="${imgUrl}"
      data-deskripsi="${safeDesc}" 
      data-bahan="${safeBahan}"
      data-tersedia="${isTersedia}">
     
-    <img src="${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}"
+    <img src="${imgUrl}"
          class="produk-img w-full h-48 object-cover cursor-pointer"
-         onclick="bukaModal('${p.name}', ${p.price}, '${p.imageUrl || 'https://placehold.co/500x400?text=No+Image'}', '${safeDesc}', '${safeBahan}')">
+         onclick="bukaModalFromElement(this)">
 
     <div class="p-4 flex-1 flex flex-col justify-between">
         <div>
@@ -209,21 +232,10 @@ document.addEventListener("keydown", (e) => {
 loadCategoryProducts();
 
 // ==========================
-// REAL-TIME PRODUCT UPDATES (SSE)
+// REAL-TIME PRODUCT UPDATES (POLLING)
 // ==========================
 function setupCategoryRealtimeUpdates() {
-    const eventSource = new EventSource('/api/products/stream');
-    
-    eventSource.addEventListener('product-update', function(event) {
-        console.log("Real-time update received:", event.data);
-        loadCategoryProducts(); // Reload products silently
-    });
-
-    eventSource.onerror = function(err) {
-        console.error("SSE Error:", err);
-        eventSource.close();
-        // Reconnect after 5 seconds
-        setTimeout(setupCategoryRealtimeUpdates, 5000);
-    };
+    // Poll category products every 30 seconds silently in the background
+    setInterval(loadCategoryProducts, 30000);
 }
 setupCategoryRealtimeUpdates();
