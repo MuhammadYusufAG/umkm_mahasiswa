@@ -1,5 +1,5 @@
 #LINK YOURUBE : https://youtu.be/fEWA3SKQxf0
-
+#PPT & MAKALAH : https://drive.google.com/drive/folders/1kyGklNonv35FPK6RFKv0-fqjvhjJRBcE
 
 # UNIP Market (UMKM Mahasiswa)
 
